@@ -1,46 +1,98 @@
 package com.accord.net;
 
 
+import android.util.Log;
+
+import org.jetbrains.annotations.NotNull;
+import org.json.JSONObject;
+
 import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+import static com.accord.util.Constants.REST_SERVER_URL;
 
 public class RestClient {
 
-    private GetRequests getRequests;
-    private PostRequests postRequests;
+    private UniKsApi uniKsApi;
 
-    public GetRequests getGetRequests() {
-        return getRequests;
+    public void setup() {
+        //Logging Retrofit
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(REST_SERVER_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        uniKsApi = retrofit.create(UniKsApi.class);
     }
 
-    public PostRequests getPostRequests() {
-        return postRequests;
+    // Interface
+    public interface LoginCallback {
+        void onLogin(String status, Map<String, String> userKey);
+        void onLoginFailed(Throwable error);
+    }
+    public interface getUserCallback {
+        void onGetUser();
+        void onGetUserFailed(Throwable error);
     }
 
-    public void createPost(Call call) {
+    public void doLogin(String username, String password, final LoginCallback postCallback) {
+
+        PostRequests postRequests = new PostRequests(username, password);
+        Call<PostRequests> call = uniKsApi.login(postRequests);
+
         call.enqueue(new Callback<PostRequests>() {
             @Override
-            public void onResponse(Call<PostRequests> call, Response<PostRequests> response) {
-                if (!response.isSuccessful()) {
-                    System.out.print("XXX CODE: " + response.code());
+            public void onResponse(@NotNull Call<PostRequests> call, @NotNull Response<PostRequests> response) {
+                if (response != null) {
+                    JSONObject obj = null;
+
+                    // Action
+                    if (postCallback != null) {
+                        postCallback.onLogin(response.body().getStatus(), response.body().getData());
+                    }
                 }
-
-                // je nach call
-                postRequests = response.body();
-                String status =  response.body().getStatus();
-                Map data =  response.body().getData();
-                //LoginActivity.setUserKey(data.get("userKey").toString());
             }
-
             @Override
-            public void onFailure(Call<PostRequests> call, Throwable t) {
-                System.out.print("XXX ERROR: " + t.getMessage());
+            public void onFailure(@NotNull Call<PostRequests> call, @NotNull Throwable t) {
+                Log.v("ERROR", t + "");
+                if (postCallback != null)
+                    postCallback.onLoginFailed(t);
             }
         });
     }
+
+    public void getOnlineUser(String username, String password, final getUserCallback postCallback) {
+
+        PostRequests postRequests = new PostRequests(username, password);
+        Call<PostRequests> call = uniKsApi.login(postRequests);
+
+        call.enqueue(new Callback<PostRequests>() {
+            @Override
+            public void onResponse(@NotNull Call<PostRequests> call, @NotNull Response<PostRequests> response) {
+                if (response != null) {
+                    JSONObject obj = null;
+
+                    // Action
+                    if (postCallback != null) {
+                        postCallback.onGetUser();
+                    }
+                }
+            }
+            @Override
+            public void onFailure(@NotNull Call<PostRequests> call, @NotNull Throwable t) {
+                Log.v("ERROR", t + "");
+                if (postCallback != null)
+                    postCallback.onGetUserFailed(t);
+            }
+        });
+    }
+
+
 
     public void createGet(Call<GetRequests> call) {
         call.enqueue(new Callback<GetRequests>() {
@@ -51,8 +103,8 @@ public class RestClient {
                     return;
                 }
 
-                getRequests = response.body();
-                Map data =  response.body().getData();
+                //getRequests = response.body();
+                Map data = response.body().getData();
                 System.out.print(data);
             }
 

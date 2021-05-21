@@ -1,36 +1,28 @@
 package com.accord;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.accord.net.PostRequests;
 import com.accord.net.RestClient;
 import com.accord.net.UniKsApi;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.Volley;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
-
-import static com.accord.util.Constants.REST_SERVER_URL;
 
 //import com.accord.net.RestClient;
 
 public class LoginActivity extends AppCompatActivity {
+    private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor sharedPreferencesEditor;
     private EditText editText_username;
     private EditText editText_password;
@@ -42,7 +34,6 @@ public class LoginActivity extends AppCompatActivity {
 
     private String userKey;
     private Map onlineUser;
-    //private RestClient restClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,16 +59,16 @@ public class LoginActivity extends AppCompatActivity {
         //button_signIn.setOnClickListener(this::singInButtonClick);
 
         textView_info.setText("");
-
-        SharedPreferences sharedPreferences = getSharedPreferences("UserInfo", 0);
+        sharedPreferences = getSharedPreferences("UserInfo", 0);
         sharedPreferencesEditor = sharedPreferences.edit();
         editText_username.setText(sharedPreferences.getString("Username", ""));
         editText_password.setText(sharedPreferences.getString("Password", ""));
 
         restClient = new RestClient();
+        restClient.setup();
 
 
-
+        /*
         // RestAPI
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(REST_SERVER_URL)
@@ -86,58 +77,49 @@ public class LoginActivity extends AppCompatActivity {
 
         uniKsApi = retrofit.create(UniKsApi.class);
 
-        PostRequests postRequests = new PostRequests("Jens", "1234");
-        restClient.createPost(uniKsApi.login(postRequests));
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         //userKey = restClient.getPostRequests().getData().get("userKey").toString();
         System.out.print("XXX");
 
         restClient.createGet(uniKsApi.getUsers(userKey));
         //onlineUser = restClient.getGetRequests().getData();
-        System.out.print("XXX");
+        System.out.print("XXX");*/
     }
 
     public void loginButtonClick(View v) {
 
         if (!editText_username.getText().toString().equals("") && !editText_password.getText().toString().equals("")) {
 
-            try {
+            sharedPreferencesEditor.putString("Username", editText_username.getText().toString());
+            sharedPreferencesEditor.putString("Password", editText_password.getText().toString());
+            sharedPreferencesEditor.apply();
 
-                //apiPostLogin(Constants.ANDROID_KEY + ":" + textUsername.getText().toString() + ":" + Password.getText().toString());
-                sharedPreferencesEditor.putString("textUsername", editText_username.getText().toString());
-                sharedPreferencesEditor.putString("txtPassword", editText_password.getText().toString());
-                sharedPreferencesEditor.commit();
+            String username = editText_username.getText().toString();
+            String password = editText_password.getText().toString();
 
-                editText_username.setText("Jens");
-                editText_password.setText("1234");
+            restClient.doLogin(username, password, new RestClient.LoginCallback() {
+                @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+                @Override
+                public void onLogin(String status, Map<String, String> userKeyMap) {
+                    System.out.print(status);
+                    System.out.print(userKeyMap);
 
+                    userKey = userKeyMap.get("userKey");
+                    System.out.print(userKey);
 
-                String username = editText_username.getText().toString();
-                String password = editText_password.getText().toString();
+                    ModelBuilder modelBuilder = new ModelBuilder();
+                    modelBuilder.buildPersonalUser(username, userKey);
 
-                // JSONObject jsonObj = new JSONObject().accumulate("name", username).accumulate("password", password);
-                // String body = jsonObj.getString("data");
+                    Intent i = new Intent(getApplicationContext(), MainActivity.class);
+                    startActivity(i);
 
-                RequestQueue requestQueue = Volley.newRequestQueue(this);
-                String URL = " https://ac.uniks.de/api/users/login";
-                JSONObject jsonBody = new JSONObject();
-                jsonBody.put("name", username);
-                jsonBody.put("password", password);
-                final String requestBody = jsonBody.toString();
+                }
 
-                HashMap<String, String> capitalCities = new HashMap<String, String>();
+                @Override
+                public void onLoginFailed(Throwable error) {
+                    System.out.print("Error: " + error.getMessage());
+                }
+            });
 
-                // Add keys and values (Country, City)
-                capitalCities.put("name", username);
-                capitalCities.put("password", password);
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
         }
     }
 }

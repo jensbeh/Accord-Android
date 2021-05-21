@@ -15,11 +15,11 @@
         android:id="@+id/nav_gallery"
         android:name="com.accord.ui.gallery.GalleryFragment"
         android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        tools:layout="@layout/fragment_server" />
 
     <fragment
         android:id="@+id/nav_slideshow"
         android:name="com.accord.ui.slideshow.SlideshowFragment"
         android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        tools:layout="@layout/fragment_privateChat" />
 </navigation>
