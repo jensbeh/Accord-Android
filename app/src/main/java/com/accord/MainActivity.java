@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,10 +13,11 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.accord.adapter.OnlineUserAdapter;
+import com.accord.adapter.OnlineUserRecyclerViewAdapter;
 import com.accord.model.Server;
-import com.accord.model.User;
 import com.accord.net.RestClient;
 import com.accord.ui.home.HomeFragment;
 import com.accord.ui.privateChat.PrivateChatFragment;
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
 
     private static ModelBuilder modelBuilder;
     private RestClient restClient;
@@ -43,8 +43,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private TextView text_userKey;
     private Button button_logout;
     private NavigationView navigationViewRight;
-    private ListView listViewServer;
-    private ListView listViewOnlineUser;
+    private RecyclerView rv_server;
+    private RecyclerView rv_onlineUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,8 +73,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         ////////////////////////////////////////////////////
 
-        listViewServer = navigationViewLeft.findViewById(R.id.list_server);
-        listViewOnlineUser = navigationViewRight.findViewById(R.id.list_onlineUser);
+        rv_server = navigationViewLeft.findViewById(R.id.rv_server);
+        rv_onlineUser = navigationViewRight.findViewById(R.id.rv_onlineUser);
         button_logout = navigationViewLeft.findViewById(R.id.button_logout);
         text_username = navigationViewLeft.findViewById(R.id.text_username);
         text_userKey = navigationViewLeft.findViewById(R.id.text_userKey);
@@ -104,8 +104,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     modelBuilder.buildUser(userName, userId);
                     //}
                 }
-                List<User> onlineUser = modelBuilder.getPersonalUser().getUser();
-                System.out.print(onlineUser);
                 updateOnlineUserListView();
             }
 
@@ -143,8 +141,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void updateOnlineUserListView() {
-        OnlineUserAdapter onlineUserAdapter = new OnlineUserAdapter(this, modelBuilder.getPersonalUser().getUser());
-        listViewOnlineUser.setAdapter(onlineUserAdapter);
+        rv_onlineUser.setHasFixedSize(true);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        OnlineUserRecyclerViewAdapter onlineUserAdapter = new OnlineUserRecyclerViewAdapter(this, modelBuilder);
+
+        rv_onlineUser.setLayoutManager(layoutManager);
+        rv_onlineUser.setAdapter(onlineUserAdapter);
+
+        onlineUserAdapter.setOnItemClickListener(new OnlineUserRecyclerViewAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(int position, View view) {
+
+                String userName = modelBuilder.getPersonalUser().getUser().get(position).getName();
+                String userId = modelBuilder.getPersonalUser().getUser().get(position).getId();
+                Toast.makeText(MainActivity.this, modelBuilder.getPersonalUser().getUser().get(position).getName(), Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onItemLongClick(int position, View view) {
+                Toast.makeText(MainActivity.this, modelBuilder.getPersonalUser().getUser().get(position).getId(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     @Override

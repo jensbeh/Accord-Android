@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- StatusBar Colors -->
+    <color name="mainLayoutColor">@color/grey</color>
+
+    <!-- Basic Colors -->
     <color name="grey">#4D4D4D</color>
     <color name="dark_grey">#2B2B2B</color>
     <color name="very_dark_grey">#171717</color>
@@ -9,4 +14,8 @@
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FF0000</color>
     <color name="light_red">#FF2525</color>
+
+    <!-- Button Colors -->
+    <color name="logoutButtonBG">#A6A6A6</color>
+    <color name="logoutButtonTxt">#373737</color>
 </resources>

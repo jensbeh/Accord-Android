@@ -29,19 +29,17 @@
         android:fitsSystemWindows="true">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_gravity="start"
             android:orientation="vertical"
-            android:layout_gravity="start">
+            android:background="@color/mainLayoutColor">
 
-            <ListView
-                android:id="@+id/list_server"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_server"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:choiceMode="singleChoice"
-                android:dividerHeight="1dp"
-                android:listSelector="#FF0000"
-                android:textColor="#424242"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -72,11 +70,14 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.97" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/button_logout"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="89dp"
+                android:layout_height="36dp"
+                android:background="@drawable/logout_button"
                 android:text="@string/logout"
+                android:textColor="@color/white"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.13"
@@ -97,17 +98,16 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:background="@color/mainLayoutColor">
 
-            <ListView
-                android:id="@+id/list_onlineUser"
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_onlineUser"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="40dp"
                 android:choiceMode="singleChoice"
-                android:dividerHeight="1dp"
-                android:listSelector="#FF0000"
-                android:textColor="#424242"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
