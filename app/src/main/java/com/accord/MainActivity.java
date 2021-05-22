@@ -1,58 +1,202 @@
 package com.accord;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
 
+import com.accord.adapter.OnlineUserAdapter;
+import com.accord.model.Server;
+import com.accord.model.User;
+import com.accord.net.RestClient;
+import com.accord.ui.home.HomeFragment;
+import com.accord.ui.privateChat.PrivateChatFragment;
+import com.accord.ui.server.ServerFragment;
 import com.google.android.material.navigation.NavigationView;
+import com.google.gson.Gson;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private static ModelBuilder modelBuilder;
-    private AppBarConfiguration mAppBarConfiguration;
+    private RestClient restClient;
+    private DrawerLayout drawer;
+    private NavigationView navigationViewLeft;
+    private HomeFragment homeController;
+    private PrivateChatFragment privateChatController;
+    private ServerFragment serverController;
+
+    private TextView text_username;
+    private TextView text_userKey;
+    private Button button_logout;
+    private NavigationView navigationViewRight;
+    private ListView listViewServer;
+    private ListView listViewOnlineUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //modelBuilder = (ModelBuilder) getIntent().getSerializableExtra("ModelBuilder");
+        // Get ModelBuilder
+        Gson gson = new Gson();
+        String modelBuilderAsAString = getIntent().getStringExtra("ModelBuilder");
+        modelBuilder = gson.fromJson(modelBuilderAsAString, ModelBuilder.class);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        mAppBarConfiguration = new AppBarConfiguration.Builder(R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow).setDrawerLayout(drawer).build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
-        NavigationUI.setupWithNavController(navigationView, navController);
+        restClient = new RestClient();
+        restClient.setup();
+
+        drawer = findViewById(R.id.drawer_layout);
+        navigationViewLeft = findViewById(R.id.nav_view_left);
+        navigationViewRight = findViewById(R.id.nav_view_right);
+        navigationViewLeft.setNavigationItemSelectedListener(this);
+
+        // Setup navigation and screen when start
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    new HomeFragment(modelBuilder)).commit();
+            navigationViewLeft.setCheckedItem(R.id.nav_Home);
+        }
+
+        ////////////////////////////////////////////////////
+
+        listViewServer = navigationViewLeft.findViewById(R.id.list_server);
+        listViewOnlineUser = navigationViewRight.findViewById(R.id.list_onlineUser);
+        button_logout = navigationViewLeft.findViewById(R.id.button_logout);
+        text_username = navigationViewLeft.findViewById(R.id.text_username);
+        text_userKey = navigationViewLeft.findViewById(R.id.text_userKey);
+
+        text_username.setText(modelBuilder.getPersonalUser().getName());
+        text_userKey.setText(modelBuilder.getPersonalUser().getUserKey());
+
+        homeController = new HomeFragment(modelBuilder);
+        privateChatController = new PrivateChatFragment(modelBuilder);
+        serverController = new ServerFragment(modelBuilder);
+
+        button_logout.setOnClickListener(this::onLogoutButtonClick);
+
+        // Get Online User
+        restClient.doGetOnlineUser(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
+            @Override
+            public void onSuccess(String status, List data) {
+                System.out.print(status);
+                System.out.print(data);
+                ArrayList<Server> onlineServers = new ArrayList<>();
+                for (int i = 0; i < data.size(); i++) {
+                    Map<String, String> userMap = (Map<String, String>) data.get(i);
+                    String userName = userMap.get("name");
+                    String userId = userMap.get("id");
+
+                    //if (!userName.equals(modelBuilder.getPersonalUser().getName())) {
+                    modelBuilder.buildUser(userName, userId);
+                    //}
+                }
+                List<User> onlineUser = modelBuilder.getPersonalUser().getUser();
+                System.out.print(onlineUser);
+                updateOnlineUserListView();
+            }
+
+            @Override
+            public void onFailed(Throwable error) {
+                System.out.print("Error: " + error.getMessage());
+            }
+        });
+
+        ActionBarDrawerToggle mDrawerToggle = new ActionBarDrawerToggle(this, drawer, R.string.drawer_open, R.string.drawer_close) {
+            // When closed a navigation view unlock the other
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                if (drawer.getDrawerLockMode(findViewById(R.id.nav_view_left)) == DrawerLayout.LOCK_MODE_LOCKED_CLOSED) {
+                    drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, findViewById(R.id.nav_view_left));
+
+                } else if (drawer.getDrawerLockMode(findViewById(R.id.nav_view_right)) == DrawerLayout.LOCK_MODE_LOCKED_CLOSED) {
+                    drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, findViewById(R.id.nav_view_right));
+                }
+            }
+            // When opened a navigation view lock the other
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                NavigationView nav_view = drawerView.findViewById(R.id.nav_view_left);
+                NavigationView nav_view_right = drawerView.findViewById(R.id.nav_view_right);
+
+                if (nav_view == null) {
+                    drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, findViewById(R.id.nav_view_left));
+                } else if (nav_view_right == null) {
+                    drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, findViewById(R.id.nav_view_right));
+                }
+            }
+        };
+        drawer.addDrawerListener(mDrawerToggle);
     }
 
-    // generates Menu when start MainActivity
+    private void updateOnlineUserListView() {
+        OnlineUserAdapter onlineUserAdapter = new OnlineUserAdapter(this, modelBuilder.getPersonalUser().getUser());
+        listViewOnlineUser.setAdapter(onlineUserAdapter);
+    }
+
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main_menu_setting, menu);
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.nav_Home:
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        homeController).commit();
+                Toast.makeText(this, modelBuilder.getPersonalUser().getName(), Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.nav_PrivateChat:
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        privateChatController).commit();
+                Toast.makeText(this, modelBuilder.getPersonalUser().getUserKey(), Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.nav_Server:
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        serverController).commit();
+                break;
+        }
+        drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
     @Override
-    public boolean onSupportNavigateUp() {
-        Toast.makeText(this, "HERE", Toast.LENGTH_SHORT).show();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
-                || super.onSupportNavigateUp();
+    public void onBackPressed() {
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
+
+    private void onLogoutButtonClick(View view) {
+        restClient.doLogout(modelBuilder.getPersonalUser().getUserKey(), new RestClient.PostCallback() {
+            @Override
+            public void onSuccess(String status, Map<String, String> data) {
+                System.out.print(status);
+                System.out.print(data);
+
+                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.activity_exit_backwards, R.anim.activity_enter_backwards);
+            }
+
+            @Override
+            public void onFailed(Throwable error) {
+                System.out.print("Error: " + error.getMessage());
+            }
+        });
+    }
+
 
     public static ModelBuilder getModelBuilder() {
         return modelBuilder;

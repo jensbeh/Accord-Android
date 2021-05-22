@@ -1,4 +1,4 @@
-package com.accord.ui.home;
+package com.accord.ui.privateChat;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,16 +11,16 @@ import androidx.fragment.app.Fragment;
 import com.accord.ModelBuilder;
 import com.accord.R;
 
-public class HomeFragment extends Fragment {
+public class PrivateChatFragment extends Fragment {
     private ModelBuilder modelBuilder;
 
-    public HomeFragment(ModelBuilder modelBuilder) {
+    public PrivateChatFragment(ModelBuilder modelBuilder) {
         this.modelBuilder = modelBuilder;
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        return inflater.inflate(R.layout.fragment_private_chat, container, false);
     }
 }

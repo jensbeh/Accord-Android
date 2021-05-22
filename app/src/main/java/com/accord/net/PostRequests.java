@@ -4,8 +4,9 @@ import java.util.Map;
 
 public class PostRequests {
 
-    private String name;
-    private String password;
+    private String userKey = null;
+    private String name = null;
+    private String password = null;
     private String status = null;
     private String message = null;
     private Map data = null;

@@ -4,8 +4,8 @@ package com.accord.net;
 import android.util.Log;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONObject;
 
+import java.util.List;
 import java.util.Map;
 
 import retrofit2.Call;
@@ -15,6 +15,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 import static com.accord.util.Constants.REST_SERVER_URL;
+import static com.accord.util.Constants.SUCCESS;
 
 public class RestClient {
 
@@ -31,17 +32,17 @@ public class RestClient {
     }
 
     // Interface
-    public interface LoginCallback {
-        void onLogin(String status, Map<String, String> userKey);
-        void onLoginFailed(Throwable error);
-    }
-    public interface getUserCallback {
-        void onGetUser();
-        void onGetUserFailed(Throwable error);
+    public interface PostCallback {
+        void onSuccess(String status, Map<String, String> data);
+        void onFailed(Throwable error);
     }
 
-    public void doLogin(String username, String password, final LoginCallback postCallback) {
+    public interface GetCallback {
+        void onSuccess(String status, List data);
+        void onFailed(Throwable error);
+    }
 
+    public void doLogin(String username, String password, final PostCallback postCallback) {
         PostRequests postRequests = new PostRequests(username, password);
         Call<PostRequests> call = uniKsApi.login(postRequests);
 
@@ -49,68 +50,76 @@ public class RestClient {
             @Override
             public void onResponse(@NotNull Call<PostRequests> call, @NotNull Response<PostRequests> response) {
                 if (response != null) {
-                    JSONObject obj = null;
-
                     // Action
                     if (postCallback != null) {
-                        postCallback.onLogin(response.body().getStatus(), response.body().getData());
+                        if (response.body().getStatus().equals(SUCCESS)) {
+                            postCallback.onSuccess(response.body().getStatus(), response.body().getData());
+                        } else {
+                            postCallback.onFailed(new Throwable("Can't Login! " + response.body().getMessage()));
+                        }
                     }
                 }
             }
+
             @Override
             public void onFailure(@NotNull Call<PostRequests> call, @NotNull Throwable t) {
                 Log.v("ERROR", t + "");
                 if (postCallback != null)
-                    postCallback.onLoginFailed(t);
+                    postCallback.onFailed(t);
             }
         });
     }
 
-    public void getOnlineUser(String username, String password, final getUserCallback postCallback) {
-
-        PostRequests postRequests = new PostRequests(username, password);
-        Call<PostRequests> call = uniKsApi.login(postRequests);
+    public void doLogout(String userKey, final PostCallback postCallback) {
+        Call<PostRequests> call = uniKsApi.logout(userKey);
 
         call.enqueue(new Callback<PostRequests>() {
             @Override
             public void onResponse(@NotNull Call<PostRequests> call, @NotNull Response<PostRequests> response) {
                 if (response != null) {
-                    JSONObject obj = null;
-
                     // Action
                     if (postCallback != null) {
-                        postCallback.onGetUser();
+                        if (response.body().getStatus().equals(SUCCESS)) {
+                            postCallback.onSuccess(response.body().getStatus(), response.body().getData());
+                        } else {
+                            postCallback.onFailed(new Throwable("Can't Logout! " + response.body().getMessage()));
+                        }
                     }
                 }
             }
+
             @Override
             public void onFailure(@NotNull Call<PostRequests> call, @NotNull Throwable t) {
                 Log.v("ERROR", t + "");
                 if (postCallback != null)
-                    postCallback.onGetUserFailed(t);
+                    postCallback.onFailed(t);
             }
         });
     }
 
+    public void doGetOnlineUser(String userKey, final GetCallback getCallback) {
+        Call<GetRequests> call = uniKsApi.getUsers(userKey);
 
-
-    public void createGet(Call<GetRequests> call) {
         call.enqueue(new Callback<GetRequests>() {
             @Override
-            public void onResponse(Call<GetRequests> call, Response<GetRequests> response) {
-                if (!response.isSuccessful()) {
-                    System.out.print("XXX CODE: " + response.code());
-                    return;
+            public void onResponse(@NotNull Call<GetRequests> call, @NotNull Response<GetRequests> response) {
+                if (response != null) {
+                    // Action
+                    if (getCallback != null) {
+                        if (response.body().getStatus().equals(SUCCESS)) {
+                            getCallback.onSuccess(response.body().getStatus(), response.body().getData());
+                        } else {
+                            getCallback.onFailed(new Throwable("Can't Logout! " + response.body().getMessage()));
+                        }
+                    }
                 }
-
-                //getRequests = response.body();
-                Map data = response.body().getData();
-                System.out.print(data);
             }
 
             @Override
-            public void onFailure(Call<GetRequests> call, Throwable t) {
-                System.out.print("XXX ERROR: " + t.getMessage());
+            public void onFailure(@NotNull Call<GetRequests> call, @NotNull Throwable t) {
+                Log.v("ERROR", t + "");
+                if (getCallback != null)
+                    getCallback.onFailed(t);
             }
         });
     }

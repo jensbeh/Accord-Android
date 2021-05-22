@@ -1,13 +1,8 @@
 package com.accord.model;
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
-import java.util.Objects;
 import java.beans.PropertyChangeSupport;
+import java.util.Objects;
 
-@RequiresApi(api = Build.VERSION_CODES.KITKAT)
 public class Message
 {
     public static final String PROPERTY_FROM = "from";

@@ -1,13 +1,9 @@
 package com.accord;
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
 import com.accord.model.CurrentUser;
 import com.accord.model.Server;
+import com.accord.model.User;
 
-@RequiresApi(api = Build.VERSION_CODES.KITKAT)
 public class ModelBuilder {
 
     private Server currentServer;
@@ -21,6 +17,17 @@ public class ModelBuilder {
         return personalUser;
     }
 
+    public User buildUser(String name, String id) {
+        for (User user : personalUser.getUser()) {
+            if (user.getId().equals(id)) {
+                return user;
+            }
+        }
+        User newUser = new User().setName(name).setId(id).setStatus(true);
+        personalUser.withUser(newUser);
+        return newUser;
+    }
+
     /*
     private Server currentServer;
     private CurrentUser personalUser;
@@ -32,16 +39,7 @@ public class ModelBuilder {
     /////////////////////////////////////////
 
 
-    public User buildUser(String name, String id) {
-        for (User user : personalUser.getUser()) {
-            if (user.getId().equals(id)) {
-                return user;
-            }
-        }
-        User newUser = new User().setName(name).setId(id).setStatus(true);
-        personalUser.withUser(newUser);
-        return newUser;
-    }
+
 
     public User buildServerUser(String name, String id, Boolean status) {
         for (User user : currentServer.getUser()) {

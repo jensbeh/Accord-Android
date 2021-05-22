@@ -1,17 +1,12 @@
 package com.accord.model;
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Collections;
-import java.util.Collection;
-import java.beans.PropertyChangeSupport;
 
-@RequiresApi(api = Build.VERSION_CODES.KITKAT)
 public class User
 {
     public static final String PROPERTY_NAME = "name";
