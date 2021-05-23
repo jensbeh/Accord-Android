@@ -5,6 +5,9 @@ import android.os.StrictMode;
 
 import com.accord.ModelBuilder;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.Timer;
@@ -78,10 +81,14 @@ public class WebSocketClient extends Endpoint {
     }
 
     private void onMessage(String message) {
-        // Process Message
-        //JsonObject jsonObject = (JsonObject) JsonUtil.toJson(message);
-        // Use callback to handle it
-        this.callback.handleMessage(message);
+        try {
+            // Process Message
+            JSONObject jsonObject = new JSONObject(message);
+            // Use callback to handle it
+            this.callback.handleMessage(jsonObject);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public void sendMessage(String message) throws IOException {

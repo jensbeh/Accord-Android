@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.accord.adapter.OnlineUserRecyclerViewAdapter;
 import com.accord.adapter.ServerRecyclerViewAdapter;
 import com.accord.model.Server;
+import com.accord.model.User;
 import com.accord.net.RestClient;
 import com.accord.net.WSCallback;
 import com.accord.net.WebSocketClient;
@@ -28,6 +29,9 @@ import com.accord.ui.privateChat.PrivateChatFragment;
 import com.accord.ui.server.ServerFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -62,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private RecyclerView rv_onlineUser;
     private RecyclerView rv_privateChats;
     private boolean currentlyOnServerView;
+    private OnlineUserRecyclerViewAdapter onlineUserAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,44 +112,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         button_logout.setOnClickListener(this::onLogoutButtonClick);
 
-        try {
-            USER_CLIENT = new WebSocketClient(modelBuilder, new URI(WS_SERVER_URL + WEBSOCKET_PATH + SYSTEM_WEBSOCKET_PATH), new WSCallback() {
-                @Override
-                public void handleMessage(String msg) {
-                    System.out.print(msg);
-                    Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
-                }
-
-                @Override
-                public void onClose(Session session, CloseReason closeReason) {
-                    System.out.print(closeReason);
-                }
-            });
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
-        // Get Online User
-        restClient.doGetOnlineUser(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
-            @Override
-            public void onSuccess(String status, List data) {
-                for (int i = 0; i < data.size(); i++) {
-                    Map<String, String> userMap = (Map<String, String>) data.get(i);
-                    String userName = userMap.get("name");
-                    String userId = userMap.get("id");
-
-                    //if (!userName.equals(modelBuilder.getPersonalUser().getName())) {
-                    modelBuilder.buildUser(userName, userId);
-                    //}
-                }
-                updateOnlineUserRecyclerView();
-            }
-
-            @Override
-            public void onFailed(Throwable error) {
-                System.out.print("Error: " + error.getMessage());
-            }
-        });
+        showUsers();
 
         restClient.doGetServer(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
             @Override
@@ -203,10 +171,90 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(mDrawerToggle);
     }
 
-    private void updateOnlineUserRecyclerView() {
+    public void showUsers() {
+
+        // Get Online User
+        restClient.doGetOnlineUser(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
+            @Override
+            public void onSuccess(String status, List data) {
+                for (int i = 0; i < data.size(); i++) {
+                    Map<String, String> userMap = (Map<String, String>) data.get(i);
+                    String userName = userMap.get("name");
+                    String userId = userMap.get("id");
+
+                    //if (!userName.equals(modelBuilder.getPersonalUser().getName())) {
+                    modelBuilder.buildUser(userName, userId);
+                    //}
+                }
+                setupOnlineUserRecyclerView();
+                startWebsocketConnection();
+            }
+
+            @Override
+            public void onFailed(Throwable error) {
+                System.out.print("Error: " + error.getMessage());
+            }
+        });
+    }
+
+    private void startWebsocketConnection() {
+        try {
+            USER_CLIENT = new WebSocketClient(modelBuilder, new URI(WS_SERVER_URL + WEBSOCKET_PATH + SYSTEM_WEBSOCKET_PATH), new WSCallback() {
+                @Override
+                public void handleMessage(JSONObject msg) {
+                    try {
+                        System.out.println("msg: " + msg);
+                        String userAction = msg.getString("action");
+                        JSONObject jsonData = msg.getJSONObject("data");
+                        String userName = jsonData.getString("name");
+                        String userId = jsonData.getString("id");
+
+                        if (userAction.equals("userJoined")) {
+                            modelBuilder.buildUser(userName, userId);
+                        }
+                        if (userAction.equals("userLeft")) {
+                            if (userName.equals(modelBuilder.getPersonalUser().getName())) {
+                                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                                startActivity(intent);
+                                overridePendingTransition(R.anim.activity_exit_backwards, R.anim.activity_enter_backwards);
+                            }
+
+                            List<User> userList = modelBuilder.getPersonalUser().getUser();
+                            User removeUser = modelBuilder.buildUser(userName, userId);
+                            if (userList.contains(removeUser)) {
+                                modelBuilder.getPersonalUser().withoutUser(removeUser);
+                            }
+                        }
+                        //modelBuilder.getPersonalUser().getUser().sort(new SortUser());
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                onlineUserAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onClose(Session session, CloseReason closeReason) {
+                    System.out.print(closeReason);
+                }
+            });
+            modelBuilder.setUSER_CLIENT(USER_CLIENT);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+
+    private void setupOnlineUserRecyclerView() {
         rv_onlineUser.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        OnlineUserRecyclerViewAdapter onlineUserAdapter = new OnlineUserRecyclerViewAdapter(this, modelBuilder);
+        onlineUserAdapter = new OnlineUserRecyclerViewAdapter(this, modelBuilder);
 
         rv_onlineUser.setLayoutManager(layoutManager);
         rv_onlineUser.setAdapter(onlineUserAdapter);

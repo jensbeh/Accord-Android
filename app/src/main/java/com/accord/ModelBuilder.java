@@ -3,11 +3,14 @@ package com.accord;
 import com.accord.model.CurrentUser;
 import com.accord.model.Server;
 import com.accord.model.User;
+import com.accord.net.WebSocketClient;
 
 public class ModelBuilder {
 
     private Server currentServer;
     private CurrentUser personalUser;
+
+    private WebSocketClient USER_CLIENT;
 
     public void buildPersonalUser(String name, String userKey) {
         personalUser = new CurrentUser().setName(name).setUserKey(userKey);
@@ -45,6 +48,10 @@ public class ModelBuilder {
 
     public Server getCurrentServer() {
         return currentServer;
+    }
+
+    public void setUSER_CLIENT(WebSocketClient USER_CLIENT) {
+        this.USER_CLIENT = USER_CLIENT;
     }
 
     /*
