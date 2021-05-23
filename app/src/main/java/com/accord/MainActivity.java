@@ -11,33 +11,48 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.adapter.OnlineUserRecyclerViewAdapter;
+import com.accord.adapter.ServerRecyclerViewAdapter;
 import com.accord.model.Server;
 import com.accord.net.RestClient;
+import com.accord.net.WSCallback;
+import com.accord.net.WebSocketClient;
 import com.accord.ui.home.HomeFragment;
 import com.accord.ui.privateChat.PrivateChatFragment;
 import com.accord.ui.server.ServerFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
+import javax.websocket.CloseReason;
+import javax.websocket.Session;
+
+import static com.accord.util.Constants.SYSTEM_WEBSOCKET_PATH;
+import static com.accord.util.Constants.WEBSOCKET_PATH;
+import static com.accord.util.Constants.WS_SERVER_URL;
+
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private static ModelBuilder modelBuilder;
     private RestClient restClient;
+    private WebSocketClient USER_CLIENT;
     private DrawerLayout drawer;
     private NavigationView navigationViewLeft;
     private HomeFragment homeController;
     private PrivateChatFragment privateChatController;
     private ServerFragment serverController;
+
 
     private TextView text_username;
     private TextView text_userKey;
@@ -45,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private NavigationView navigationViewRight;
     private RecyclerView rv_server;
     private RecyclerView rv_onlineUser;
+    private RecyclerView rv_privateChats;
+    private boolean currentlyOnServerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         rv_server = navigationViewLeft.findViewById(R.id.rv_server);
         rv_onlineUser = navigationViewRight.findViewById(R.id.rv_onlineUser);
+        rv_privateChats = navigationViewLeft.findViewById(R.id.rv_privateChats);
         button_logout = navigationViewLeft.findViewById(R.id.button_logout);
         text_username = navigationViewLeft.findViewById(R.id.text_username);
         text_userKey = navigationViewLeft.findViewById(R.id.text_userKey);
@@ -85,16 +103,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         homeController = new HomeFragment(modelBuilder);
         privateChatController = new PrivateChatFragment(modelBuilder);
         serverController = new ServerFragment(modelBuilder);
+        currentlyOnServerView = false;
 
         button_logout.setOnClickListener(this::onLogoutButtonClick);
+
+        try {
+            USER_CLIENT = new WebSocketClient(modelBuilder, new URI(WS_SERVER_URL + WEBSOCKET_PATH + SYSTEM_WEBSOCKET_PATH), new WSCallback() {
+                @Override
+                public void handleMessage(String msg) {
+                    System.out.print(msg);
+                    Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onClose(Session session, CloseReason closeReason) {
+                    System.out.print(closeReason);
+                }
+            });
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
 
         // Get Online User
         restClient.doGetOnlineUser(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
             @Override
             public void onSuccess(String status, List data) {
-                System.out.print(status);
-                System.out.print(data);
-                ArrayList<Server> onlineServers = new ArrayList<>();
                 for (int i = 0; i < data.size(); i++) {
                     Map<String, String> userMap = (Map<String, String>) data.get(i);
                     String userName = userMap.get("name");
@@ -104,7 +137,36 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     modelBuilder.buildUser(userName, userId);
                     //}
                 }
-                updateOnlineUserListView();
+                updateOnlineUserRecyclerView();
+            }
+
+            @Override
+            public void onFailed(Throwable error) {
+                System.out.print("Error: " + error.getMessage());
+            }
+        });
+
+        restClient.doGetServer(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
+            @Override
+            public void onSuccess(String status, List data) {
+                System.out.print(status);
+                System.out.print(data);
+                ArrayList<Server> onlineServers = new ArrayList<>();
+                for (int i = 0; i < data.size(); i++) {
+                    Map<String, String> serverMap = (Map<String, String>) data.get(i);
+                    String serverName = serverMap.get("name");
+                    String serverId = serverMap.get("id");
+                    System.out.print("XXX");
+
+                    Server server = modelBuilder.buildServer(serverName, serverId);
+                    onlineServers.add(server);
+                }
+                for (Server server : modelBuilder.getPersonalUser().getServer()) {
+                    if (!onlineServers.contains(server)) {
+                        modelBuilder.getPersonalUser().withoutServer(server);
+                    }
+                }
+                updateServersRecyclerView();
             }
 
             @Override
@@ -124,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, findViewById(R.id.nav_view_right));
                 }
             }
+
             // When opened a navigation view lock the other
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
@@ -140,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(mDrawerToggle);
     }
 
-    private void updateOnlineUserListView() {
+    private void updateOnlineUserRecyclerView() {
         rv_onlineUser.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         OnlineUserRecyclerViewAdapter onlineUserAdapter = new OnlineUserRecyclerViewAdapter(this, modelBuilder);
@@ -153,13 +216,47 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             public void onItemClick(int position, View view) {
 
                 String userName = modelBuilder.getPersonalUser().getUser().get(position).getName();
-                String userId = modelBuilder.getPersonalUser().getUser().get(position).getId();
-                Toast.makeText(MainActivity.this, modelBuilder.getPersonalUser().getUser().get(position).getName(), Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void onItemLongClick(int position, View view) {
-                Toast.makeText(MainActivity.this, modelBuilder.getPersonalUser().getUser().get(position).getId(), Toast.LENGTH_LONG).show();
+                String userId = modelBuilder.getPersonalUser().getUser().get(position).getId();
+                Toast.makeText(MainActivity.this, userId, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void updateServersRecyclerView() {
+        rv_server.setHasFixedSize(true);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        ServerRecyclerViewAdapter serverRecyclerViewAdapter = new ServerRecyclerViewAdapter(this, modelBuilder);
+
+        rv_server.setLayoutManager(layoutManager);
+        rv_server.setAdapter(serverRecyclerViewAdapter);
+
+        serverRecyclerViewAdapter.setOnItemClickListener(new ServerRecyclerViewAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(int position, View view, CardView cardView) {
+                String serverName = modelBuilder.getPersonalUser().getServer().get(position).getName();
+                Toast.makeText(MainActivity.this, serverName, Toast.LENGTH_LONG).show();
+
+                modelBuilder.setCurrentServer(modelBuilder.getPersonalUser().getServer().get(position));
+                serverRecyclerViewAdapter.notifyDataSetChanged();
+
+                if (!currentlyOnServerView) {
+                    currentlyOnServerView = true;
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                            serverController).commit();
+                } else {
+                    serverController.updateServerFragment();
+                }
+            }
+
+            @Override
+            public void onItemLongClick(int position, View view) {
+                String serverId = modelBuilder.getPersonalUser().getServer().get(position).getId();
+                Toast.makeText(MainActivity.this, serverId, Toast.LENGTH_LONG).show();
             }
         });
     }

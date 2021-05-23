@@ -124,6 +124,33 @@ public class RestClient {
         });
     }
 
+    public void doGetServer(String userKey, GetCallback getCallback) {
+        Call<GetRequests> call = uniKsApi.getServer(userKey);
+
+        call.enqueue(new Callback<GetRequests>() {
+            @Override
+            public void onResponse(@NotNull Call<GetRequests> call, @NotNull Response<GetRequests> response) {
+                if (response != null) {
+                    // Action
+                    if (getCallback != null) {
+                        if (response.body().getStatus().equals(SUCCESS)) {
+                            getCallback.onSuccess(response.body().getStatus(), response.body().getData());
+                        } else {
+                            getCallback.onFailed(new Throwable("Can't Logout! " + response.body().getMessage()));
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<GetRequests> call, @NotNull Throwable t) {
+                Log.v("ERROR", t + "");
+                if (getCallback != null)
+                    getCallback.onFailed(t);
+            }
+        });
+    }
+
     /*
     HttpResponse<JsonNode> jsonResponse = Unirest.post("http://httpbin.org/post")
             .header("accept", "application/json")

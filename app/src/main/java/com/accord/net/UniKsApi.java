@@ -17,4 +17,7 @@ public interface UniKsApi {
 
     @GET(USERS_PATH)
     Call<GetRequests> getUsers(@Header("userKey") String userKey);
+
+    @GET(SERVER_PATH)
+    Call<GetRequests> getServer(@Header("userKey") String userKey);
 }

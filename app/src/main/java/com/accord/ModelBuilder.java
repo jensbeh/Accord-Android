@@ -28,6 +28,25 @@ public class ModelBuilder {
         return newUser;
     }
 
+    public Server buildServer(String name, String id) {
+        for (Server server : personalUser.getServer()) {
+            if (server.getId().equals(id)) {
+                return server;
+            }
+        }
+        Server newServer = new Server().setName(name).setId(id);
+        personalUser.withServer(newServer);
+        return newServer;
+    }
+
+    public void setCurrentServer(Server currentServer) {
+        this.currentServer = currentServer;
+    }
+
+    public Server getCurrentServer() {
+        return currentServer;
+    }
+
     /*
     private Server currentServer;
     private CurrentUser personalUser;
@@ -68,10 +87,6 @@ public class ModelBuilder {
         Server newServer = new Server().setName(name).setId(id);
         personalUser.withServer(newServer);
         return newServer;
-    }
-
-    public void setCurrentServer(Server currentServer) {
-        this.currentServer = currentServer;
     }
 
 
