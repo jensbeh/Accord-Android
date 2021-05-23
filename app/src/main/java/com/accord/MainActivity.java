@@ -11,14 +11,15 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.adapter.OnlineUserRecyclerViewAdapter;
+import com.accord.adapter.PrivateChatRecyclerViewAdapter;
 import com.accord.adapter.ServerRecyclerViewAdapter;
+import com.accord.model.Channel;
 import com.accord.model.Server;
 import com.accord.model.User;
 import com.accord.net.RestClient;
@@ -57,6 +58,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private PrivateChatFragment privateChatController;
     private ServerFragment serverController;
 
+    enum State {
+        HomeView,
+        PrivateChatView,
+        ServerView
+    }
+
+    private State state = State.HomeView;
 
     private TextView text_username;
     private TextView text_userKey;
@@ -67,6 +75,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private RecyclerView rv_privateChats;
     private boolean currentlyOnServerView;
     private OnlineUserRecyclerViewAdapter onlineUserAdapter;
+    private PrivateChatRecyclerViewAdapter privateChatRecyclerViewAdapter;
+    private ServerRecyclerViewAdapter serverRecyclerViewAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         button_logout.setOnClickListener(this::onLogoutButtonClick);
 
         showUsers();
+        setupPrivateChatRecyclerView();
 
         restClient.doGetServer(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
             @Override
@@ -134,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         modelBuilder.getPersonalUser().withoutServer(server);
                     }
                 }
-                updateServersRecyclerView();
+                setupServersRecyclerView();
             }
 
             @Override
@@ -261,52 +272,142 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         onlineUserAdapter.setOnItemClickListener(new OnlineUserRecyclerViewAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(int position, View view) {
-
-                String userName = modelBuilder.getPersonalUser().getUser().get(position).getName();
-                Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
+            public void onItemClick(View view, User user) {
+                onOnlineUserClicked(user);
             }
 
             @Override
-            public void onItemLongClick(int position, View view) {
-                String userId = modelBuilder.getPersonalUser().getUser().get(position).getId();
-                Toast.makeText(MainActivity.this, userId, Toast.LENGTH_LONG).show();
+            public void onItemLongClick(View view, User user) {
+                onOnlineUserLongClicked(user);
             }
         });
     }
 
-    private void updateServersRecyclerView() {
+    private void onOnlineUserClicked(User user) {
+        String userName = user.getName();
+        Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
+
+        Channel currentChannel = modelBuilder.getSelectedChat();
+        boolean chatExisting = false;
+        String selectedUserName = user.getName();
+        String selectUserId = user.getId();
+
+        for (Channel channel : modelBuilder.getPersonalUser().getPrivateChat()) {
+            if (channel.getName().equals(selectedUserName)) {
+                modelBuilder.setSelectedChat(channel);
+                privateChatRecyclerViewAdapter.notifyDataSetChanged();
+                chatExisting = true;
+                break;
+            }
+        }
+
+        if (!chatExisting) {
+            modelBuilder.setSelectedChat(new Channel().setName(selectedUserName).setId(selectUserId));
+            modelBuilder.getPersonalUser().withPrivateChat(modelBuilder.getSelectedChat());
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    privateChatRecyclerViewAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+        if (!modelBuilder.getSelectedChat().equals(currentChannel) && (state == State.PrivateChatView)) { // on privateChatView when other chat should be load
+            privateChatController.updatePrivateChatFragment();
+        } else if ((state == State.HomeView)) {
+            state = State.PrivateChatView;
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    privateChatController).commit();
+        }
+        drawer.closeDrawer(findViewById(R.id.nav_view_right));
+    }
+
+    private void onOnlineUserLongClicked(User user) {
+        String userId = user.getId();
+        Toast.makeText(MainActivity.this, userId, Toast.LENGTH_LONG).show();
+    }
+
+
+    private void setupPrivateChatRecyclerView() {
+        rv_privateChats.setHasFixedSize(true);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        privateChatRecyclerViewAdapter = new PrivateChatRecyclerViewAdapter(this, modelBuilder);
+
+        rv_privateChats.setLayoutManager(layoutManager);
+        rv_privateChats.setAdapter(privateChatRecyclerViewAdapter);
+
+        privateChatRecyclerViewAdapter.setOnItemClickListener(new PrivateChatRecyclerViewAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, Channel channel) {
+                onPrivateChatClicked(channel);
+            }
+
+            @Override
+            public void onItemLongClick(View view, Channel channel) {
+                onPrivateChatLongClicked(channel);
+            }
+        });
+    }
+
+    private void onPrivateChatClicked(Channel selectedChannel) {
+        String userName = selectedChannel.getName();
+        Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
+
+        modelBuilder.setSelectedChat(selectedChannel);
+        if (state != State.PrivateChatView) {
+            state = State.PrivateChatView;
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    privateChatController).commit();
+        } else {
+            privateChatController.updatePrivateChatFragment();
+        }
+        drawer.closeDrawer(findViewById(R.id.nav_view_left));
+    }
+
+    private void onPrivateChatLongClicked(Channel chat) {
+        String chatId = chat.getId();
+        Toast.makeText(MainActivity.this, chatId, Toast.LENGTH_LONG).show();
+    }
+
+    private void setupServersRecyclerView() {
         rv_server.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        ServerRecyclerViewAdapter serverRecyclerViewAdapter = new ServerRecyclerViewAdapter(this, modelBuilder);
+        serverRecyclerViewAdapter = new ServerRecyclerViewAdapter(this, modelBuilder);
 
         rv_server.setLayoutManager(layoutManager);
         rv_server.setAdapter(serverRecyclerViewAdapter);
 
         serverRecyclerViewAdapter.setOnItemClickListener(new ServerRecyclerViewAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(int position, View view, CardView cardView) {
-                String serverName = modelBuilder.getPersonalUser().getServer().get(position).getName();
-                Toast.makeText(MainActivity.this, serverName, Toast.LENGTH_LONG).show();
-
-                modelBuilder.setCurrentServer(modelBuilder.getPersonalUser().getServer().get(position));
-                serverRecyclerViewAdapter.notifyDataSetChanged();
-
-                if (!currentlyOnServerView) {
-                    currentlyOnServerView = true;
-                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                            serverController).commit();
-                } else {
-                    serverController.updateServerFragment();
-                }
+            public void onItemClick(View view, Server server) {
+                onServerClicked(server);
             }
 
             @Override
-            public void onItemLongClick(int position, View view) {
-                String serverId = modelBuilder.getPersonalUser().getServer().get(position).getId();
-                Toast.makeText(MainActivity.this, serverId, Toast.LENGTH_LONG).show();
+            public void onItemLongClick(View view, Server server) {
+                onServerLongClicked(server);
             }
         });
+    }
+
+    private void onServerClicked(Server server) {
+        String serverName = server.getName();
+        Toast.makeText(MainActivity.this, serverName, Toast.LENGTH_LONG).show();
+
+        modelBuilder.setCurrentServer(server);
+        serverRecyclerViewAdapter.notifyDataSetChanged();
+
+        if (state != State.ServerView) {
+            state = State.ServerView;
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    serverController).commit();
+        } else {
+            serverController.updateServerFragment();
+        }
+    }
+
+    private void onServerLongClicked(Server server) {
+        String serverId = server.getId();
+        Toast.makeText(MainActivity.this, serverId, Toast.LENGTH_LONG).show();
     }
 
     @Override

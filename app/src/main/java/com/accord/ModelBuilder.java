@@ -1,5 +1,6 @@
 package com.accord;
 
+import com.accord.model.Channel;
 import com.accord.model.CurrentUser;
 import com.accord.model.Server;
 import com.accord.model.User;
@@ -11,6 +12,8 @@ public class ModelBuilder {
     private CurrentUser personalUser;
 
     private WebSocketClient USER_CLIENT;
+
+    private Channel selectedChat;
 
     public void buildPersonalUser(String name, String userKey) {
         personalUser = new CurrentUser().setName(name).setUserKey(userKey);
@@ -53,6 +56,16 @@ public class ModelBuilder {
     public void setUSER_CLIENT(WebSocketClient USER_CLIENT) {
         this.USER_CLIENT = USER_CLIENT;
     }
+
+    public void setSelectedChat(Channel selectedChat) {
+        this.selectedChat = selectedChat;
+    }
+
+    public Channel getSelectedChat() {
+        return this.selectedChat;
+    }
+
+
 
     /*
     private Server currentServer;

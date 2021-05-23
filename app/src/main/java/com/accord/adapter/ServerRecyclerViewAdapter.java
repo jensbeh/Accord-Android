@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.ModelBuilder;
 import com.accord.R;
+import com.accord.model.Server;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -21,9 +22,9 @@ public class ServerRecyclerViewAdapter extends RecyclerView.Adapter<ServerRecycl
     private ModelBuilder modelBuilder;
 
     public interface OnItemClickListener {
-        void onItemClick(int position, View view, CardView cardView);
+        void onItemClick(View view, Server server);
 
-        void onItemLongClick(int position, View view);
+        void onItemLongClick(View view, Server server);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
@@ -51,7 +52,7 @@ public class ServerRecyclerViewAdapter extends RecyclerView.Adapter<ServerRecycl
         @Override
         public void onClick(View view) {
             if (longClick == false) {
-                onItemClickListener.onItemClick(getAdapterPosition(), view, serverCard);
+                onItemClickListener.onItemClick(view, getItem(getAdapterPosition()));
             } else {
                 longClick = false;
             }
@@ -59,7 +60,7 @@ public class ServerRecyclerViewAdapter extends RecyclerView.Adapter<ServerRecycl
 
         @Override
         public boolean onLongClick(View view) {
-            onItemClickListener.onItemLongClick(getAdapterPosition(), view);
+            onItemClickListener.onItemLongClick(view, getItem(getAdapterPosition()));
             longClick = true;
             return false;
         }
@@ -102,5 +103,9 @@ public class ServerRecyclerViewAdapter extends RecyclerView.Adapter<ServerRecycl
     @Override
     public int getItemCount() {
         return modelBuilder.getPersonalUser().getServer().size();
+    }
+
+    public Server getItem(int position) {
+        return modelBuilder.getPersonalUser().getServer().get(position);
     }
 }

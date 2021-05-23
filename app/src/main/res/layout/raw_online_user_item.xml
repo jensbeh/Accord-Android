@@ -19,7 +19,7 @@
         app:srcCompat="@drawable/online_status_circle" />
 
     <TextView
-        android:id="@+id/tv_rv_onlineUserName"
+        android:id="@+id/tv_rv_ChatUserName"
         android:layout_width="147dp"
         android:layout_height="35dp"
         android:layout_alignParentTop="true"

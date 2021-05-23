@@ -23,4 +23,5 @@
     <string name="drawer_open">Open</string>
     <string name="drawer_close">Close</string>
     <string name="serverName">serverName</string>
+    <string name="lastMessage">LastMessage</string>
 </resources>

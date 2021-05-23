@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.accord.ModelBuilder;
 import com.accord.R;
 import com.accord.adapter.OnlineUserRecyclerViewAdapter;
+import com.accord.model.User;
 
 public class ServerFragment extends Fragment {
     private ModelBuilder modelBuilder;
@@ -77,15 +78,15 @@ public class ServerFragment extends Fragment {
 
         testAdapter.setOnItemClickListener(new OnlineUserRecyclerViewAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(int position, View view) {
+            public void onItemClick(View view, User user) {
 
-                String userName = modelBuilder.getPersonalUser().getUser().get(position).getName();
+                String userName = user.getName();
                 Toast.makeText(context, userName, Toast.LENGTH_LONG).show();
             }
 
             @Override
-            public void onItemLongClick(int position, View view) {
-                String userId = modelBuilder.getPersonalUser().getUser().get(position).getId();
+            public void onItemLongClick(View view, User user) {
+                String userId = user.getId();
                 Toast.makeText(context, userId, Toast.LENGTH_LONG).show();
             }
         });
