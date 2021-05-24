@@ -17,5 +17,9 @@
     <!-- Button Colors -->
     <color name="logoutButtonBG">#A6A6A6</color>
     <color name="logoutButtonTxt">#373737</color>
+    <color name="receive_message_box">#1f2e34</color>
+    <color name="send_message_box">#054640</color>
+    <color name="button_send">#38b19e</color>
+    <color name="enter_message_field">#1f2e34</color>
 
 </resources>

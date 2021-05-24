@@ -20,6 +20,7 @@ import com.accord.adapter.OnlineUserRecyclerViewAdapter;
 import com.accord.adapter.PrivateChatRecyclerViewAdapter;
 import com.accord.adapter.ServerRecyclerViewAdapter;
 import com.accord.model.Channel;
+import com.accord.model.Message;
 import com.accord.model.Server;
 import com.accord.model.User;
 import com.accord.net.RestClient;
@@ -37,12 +38,15 @@ import org.json.JSONObject;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
 
+import static com.accord.util.Constants.CHAT_WEBSOCKET_PATH;
 import static com.accord.util.Constants.SYSTEM_WEBSOCKET_PATH;
 import static com.accord.util.Constants.WEBSOCKET_PATH;
 import static com.accord.util.Constants.WS_SERVER_URL;
@@ -52,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private static ModelBuilder modelBuilder;
     private RestClient restClient;
     private WebSocketClient USER_CLIENT;
+    private WebSocketClient privateChatWebSocketClient;
     private DrawerLayout drawer;
     private NavigationView navigationViewLeft;
     private HomeFragment homeController;
@@ -73,10 +78,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private RecyclerView rv_server;
     private RecyclerView rv_onlineUser;
     private RecyclerView rv_privateChats;
-    private boolean currentlyOnServerView;
     private OnlineUserRecyclerViewAdapter onlineUserAdapter;
     private PrivateChatRecyclerViewAdapter privateChatRecyclerViewAdapter;
     private ServerRecyclerViewAdapter serverRecyclerViewAdapter;
+    private static Channel selectedChat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,12 +123,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         homeController = new HomeFragment(modelBuilder);
         privateChatController = new PrivateChatFragment(modelBuilder);
         serverController = new ServerFragment(modelBuilder);
-        currentlyOnServerView = false;
 
         button_logout.setOnClickListener(this::onLogoutButtonClick);
 
         showUsers();
         setupPrivateChatRecyclerView();
+        setupPrivateChatWebSocket();
 
         restClient.doGetServer(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
             @Override
@@ -182,6 +187,96 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(mDrawerToggle);
     }
 
+    private void setupPrivateChatWebSocket() {
+        if (modelBuilder.getPrivateChatWebSocketClient() == null) {
+            privateChatWebSocketClient = new WebSocketClient(modelBuilder, URI.
+                    create(WS_SERVER_URL + WEBSOCKET_PATH + CHAT_WEBSOCKET_PATH + modelBuilder.
+                            getPersonalUser().getName().replace(" ", "+")), new WSCallback() {
+                /**
+                 * handles server response
+                 *
+                 * @param msg is the response from the server as a JsonStructure
+                 */
+                @Override
+                public void handleMessage(JSONObject msg) {
+                    try {
+                        System.out.println("privateChatWebSocketClient");
+                        System.out.println(msg);
+
+                        if (msg.has("channel") && msg.getString("channel").equals("private")) {
+                            Message message;
+                            String channelName;
+                            Date currentTime = Calendar.getInstance().getTime();
+                            Boolean newChat = true;
+
+                            // currentUser send
+                            if (msg.getString("from").equals(modelBuilder.getPersonalUser().getName())) {
+                                channelName = msg.getString("to");
+                                message = new Message().setMessage(msg.getString("message")).
+                                        setFrom(msg.getString("from")).
+                                        setTimestamp(msg.getInt("timestamp")).setDate(currentTime);
+                                privateChatController.clearMessageField();
+                            } else { // currentUser received
+                                channelName = msg.getString("from");
+                                message = new Message().setMessage(msg.getString("message")).
+                                        setFrom(msg.getString("from")).
+                                        setTimestamp(msg.getInt("timestamp")).setDate(currentTime);
+                            }
+                            for (Channel channel : modelBuilder.getPersonalUser().getPrivateChat()) {
+                                if (channel.getName().equals(channelName)) {
+                                    channel.withMessage(message);
+                                    if (selectedChat == null || channel != selectedChat) {
+                                        channel.setUnreadMessagesCounter(channel.getUnreadMessagesCounter() + 1);
+                                    }
+                                    privateChatController.updatePrivateChatFragment();
+                                    newChat = false;
+                                    break;
+                                }
+                            }
+                            if (newChat) {
+                                String userId = "";
+                                for (User user : modelBuilder.getPersonalUser().getUser()) {
+                                    if (user.getName().equals(channelName)) {
+                                        userId = user.getId();
+                                    }
+                                }
+                                Channel channel = new Channel().setId(userId).setName(channelName).withMessage(message).setUnreadMessagesCounter(1);
+                                modelBuilder.getPersonalUser().withPrivateChat(channel);
+                                privateChatController.updatePrivateChatFragment();
+                            }
+                            if (privateChatController != null) {
+                                privateChatController.printMessage(message); //PRINT MESSAGE
+                            }
+                        }
+                        if (msg.has("action") && msg.getString("action").equals("info")) {
+                            String errorTitle;
+                            String serverMessage = msg.getJSONObject("data").getString("message");
+                            if (serverMessage.equals("This is not your username.")) {
+                                System.out.print("This is not your username.");
+                                Toast.makeText(MainActivity.this, "This is not your username.", Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+                @Override
+                public void onClose(Session session, CloseReason closeReason) {
+                    System.out.println(closeReason.getCloseCode().toString());
+                    if (!closeReason.getCloseCode().toString().equals("NORMAL_CLOSURE")) {
+                        System.out.print(closeReason);
+                        Toast.makeText(MainActivity.this, "NORMAL_CLOSURE", Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
+            modelBuilder.setPrivateChatWebSocketClient(privateChatWebSocketClient);
+        } else {
+            privateChatWebSocketClient = modelBuilder.getPrivateChatWebSocketClient();
+        }
+    }
+
     public void showUsers() {
 
         // Get Online User
@@ -198,7 +293,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     //}
                 }
                 setupOnlineUserRecyclerView();
-                startWebsocketConnection();
+                startWebSocketConnection();
             }
 
             @Override
@@ -208,7 +303,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
-    private void startWebsocketConnection() {
+    private void startWebSocketConnection() {
         try {
             USER_CLIENT = new WebSocketClient(modelBuilder, new URI(WS_SERVER_URL + WEBSOCKET_PATH + SYSTEM_WEBSOCKET_PATH), new WSCallback() {
                 @Override
@@ -251,6 +346,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 @Override
                 public void onClose(Session session, CloseReason closeReason) {
                     System.out.print(closeReason);
+                    Toast.makeText(MainActivity.this, "NORMAL_CLOSURE", Toast.LENGTH_LONG).show();
                 }
             });
             modelBuilder.setUSER_CLIENT(USER_CLIENT);
@@ -287,14 +383,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String userName = user.getName();
         Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
 
-        Channel currentChannel = modelBuilder.getSelectedChat();
+        Channel currentChannel = modelBuilder.getSelectedPrivateChat();
         boolean chatExisting = false;
         String selectedUserName = user.getName();
         String selectUserId = user.getId();
 
         for (Channel channel : modelBuilder.getPersonalUser().getPrivateChat()) {
             if (channel.getName().equals(selectedUserName)) {
-                modelBuilder.setSelectedChat(channel);
+                modelBuilder.setSelectedPrivateChat(channel);
                 privateChatRecyclerViewAdapter.notifyDataSetChanged();
                 chatExisting = true;
                 break;
@@ -302,8 +398,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
         if (!chatExisting) {
-            modelBuilder.setSelectedChat(new Channel().setName(selectedUserName).setId(selectUserId));
-            modelBuilder.getPersonalUser().withPrivateChat(modelBuilder.getSelectedChat());
+            modelBuilder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
+            modelBuilder.getPersonalUser().withPrivateChat(modelBuilder.getSelectedPrivateChat());
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -311,7 +407,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             });
         }
-        if (!modelBuilder.getSelectedChat().equals(currentChannel) && (state == State.PrivateChatView)) { // on privateChatView when other chat should be load
+        if (!modelBuilder.getSelectedPrivateChat().equals(currentChannel) && (state == State.PrivateChatView)) { // on privateChatView when other chat should be load
             privateChatController.updatePrivateChatFragment();
         } else if ((state == State.HomeView)) {
             state = State.PrivateChatView;
@@ -352,7 +448,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String userName = selectedChannel.getName();
         Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
 
-        modelBuilder.setSelectedChat(selectedChannel);
+        modelBuilder.setSelectedPrivateChat(selectedChannel);
         if (state != State.PrivateChatView) {
             state = State.PrivateChatView;
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,

@@ -24,4 +24,9 @@
     <string name="drawer_close">Close</string>
     <string name="serverName">serverName</string>
     <string name="lastMessage">LastMessage</string>
+    <string name="sendMessage">sendMessage</string>
+    <string name="template_time_message">15:36</string>
+    <string name="receiveMessage">receiveMessage</string>
+    <string name="send">Send</string>
+    <string name="enter_message">Message...</string>
 </resources>

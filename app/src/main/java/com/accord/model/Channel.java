@@ -20,6 +20,7 @@ public class Channel
     protected PropertyChangeSupport listeners;
     private List<Message> message;
     private CurrentUser currentUser;
+    private int unreadMessagesCounter;
 
     public String getName()
     {
@@ -210,5 +211,14 @@ public class Channel
         this.setCategories(null);
         this.setCurrentUser(null);
         this.withoutMessage(new ArrayList<>(this.getMessage()));
+    }
+
+    public int getUnreadMessagesCounter() {
+        return unreadMessagesCounter;
+    }
+
+    public Channel setUnreadMessagesCounter(int unreadMessagesCounter) {
+        this.unreadMessagesCounter = unreadMessagesCounter;
+        return this;
     }
 }

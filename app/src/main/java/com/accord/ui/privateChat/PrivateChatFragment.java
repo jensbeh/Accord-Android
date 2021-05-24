@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 
 import com.accord.ModelBuilder;
 import com.accord.R;
+import com.accord.model.Message;
 
 public class PrivateChatFragment extends Fragment {
     private ModelBuilder modelBuilder;
@@ -34,13 +35,13 @@ public class PrivateChatFragment extends Fragment {
         // Setup any handles to view objects here
         // EditText etFoo = (EditText) view.findViewById(R.id.etFoo);
         context = view.getContext();
-        tv_userName = getView().findViewById(R.id.tv_userName);
+        //tv_userName = getView().findViewById(R.id.tv_userName);
 
         updatePrivateChatFragment();
     }
 
     public void updatePrivateChatFragment() {
-        tv_userName.setText(modelBuilder.getSelectedChat().getName());
+        //tv_userName.setText(modelBuilder.getSelectedChat().getName());
         updateTestRecyclerView();
     }
 
@@ -67,5 +68,13 @@ public class PrivateChatFragment extends Fragment {
                 Toast.makeText(context, userId, Toast.LENGTH_LONG).show();
             }
         });*/
+    }
+
+    public void clearMessageField() {
+
+    }
+
+    public void printMessage(Message message) {
+
     }
 }

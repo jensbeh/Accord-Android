@@ -92,7 +92,7 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
         if (channel.getMessage().size() > 0) {
             viewHolder.lastMessage.setText(channel.getMessage().get(channel.getMessage().size() - 1).getMessage());
         }
-        if(modelBuilder.getSelectedChat() != null && modelBuilder.getSelectedChat().getName().equals(channel.getName())) {
+        if(modelBuilder.getSelectedPrivateChat() != null && modelBuilder.getSelectedPrivateChat().getName().equals(channel.getName())) {
             //make chat background light grey
             //viewHolder.serverCard.setCardBackgroundColor(Color.BLUE);
         } else {

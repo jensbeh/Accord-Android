@@ -1,6 +1,7 @@
 package com.accord.model;
 
 import java.beans.PropertyChangeSupport;
+import java.util.Date;
 import java.util.Objects;
 
 public class Message
@@ -13,7 +14,9 @@ public class Message
     private String message;
     protected PropertyChangeSupport listeners;
     private int timestamp;
+
     private Channel channel;
+    private Date currentTime;
 
     public String getFrom()
     {
@@ -127,5 +130,14 @@ public class Message
     public void removeYou()
     {
         this.setChannel(null);
+    }
+
+    public Message setDate(Date currentTime) {
+        this.currentTime = currentTime;
+        return this;
+    }
+
+    public Date getCurrentTime() {
+        return currentTime;
     }
 }

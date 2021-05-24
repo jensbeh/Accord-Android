@@ -13,7 +13,8 @@ public class ModelBuilder {
 
     private WebSocketClient USER_CLIENT;
 
-    private Channel selectedChat;
+    private Channel selectedPrivateChat;
+    private WebSocketClient privateChatWebSocketClient;
 
     public void buildPersonalUser(String name, String userKey) {
         personalUser = new CurrentUser().setName(name).setUserKey(userKey);
@@ -57,12 +58,20 @@ public class ModelBuilder {
         this.USER_CLIENT = USER_CLIENT;
     }
 
-    public void setSelectedChat(Channel selectedChat) {
-        this.selectedChat = selectedChat;
+    public WebSocketClient getPrivateChatWebSocketClient() {
+        return privateChatWebSocketClient;
     }
 
-    public Channel getSelectedChat() {
-        return this.selectedChat;
+    public void setPrivateChatWebSocketClient(WebSocketClient privateChatWebSocketClient) {
+        this.privateChatWebSocketClient = privateChatWebSocketClient;
+    }
+
+    public void setSelectedPrivateChat(Channel selectedPrivateChat) {
+        this.selectedPrivateChat = selectedPrivateChat;
+    }
+
+    public Channel getSelectedPrivateChat() {
+        return this.selectedPrivateChat;
     }
 
 
