@@ -15,6 +15,7 @@ public class ModelBuilder {
 
     private Channel selectedPrivateChat;
     private WebSocketClient privateChatWebSocketClient;
+    private MainActivity.State state;
 
     public void buildPersonalUser(String name, String userKey) {
         personalUser = new CurrentUser().setName(name).setUserKey(userKey);
@@ -72,6 +73,14 @@ public class ModelBuilder {
 
     public Channel getSelectedPrivateChat() {
         return this.selectedPrivateChat;
+    }
+
+    public void setState(MainActivity.State state) {
+        this.state = state;
+    }
+
+    public MainActivity.State getState() {
+        return state;
     }
 
 
