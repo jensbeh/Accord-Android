@@ -22,4 +22,8 @@
     <color name="button_send">#38b19e</color>
     <color name="enter_message_field">#1f2e34</color>
 
+    <!-- RecyclerView PrivateChats Item -->
+    <color name="privateChatClicked">@color/light_grey</color>
+    <color name="privateChat">@color/black</color>
+
 </resources>

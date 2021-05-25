@@ -247,7 +247,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                         channel.setUnreadMessagesCounter(channel.getUnreadMessagesCounter() + 1);
                                     }
                                     updatePrivateChatRecyclerView();
-                                    privateMessageController.updatePrivateMessageFragment();
+                                    privateMessageController.updatePrivateMessagesFragment();
                                     newChat = false;
                                     break;
                                 }
@@ -262,7 +262,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 Channel channel = new Channel().setId(userId).setName(channelName).withMessage(message).setUnreadMessagesCounter(1);
                                 modelBuilder.getPersonalUser().withPrivateChat(channel);
                                 updatePrivateChatRecyclerView();
-                                privateMessageController.updatePrivateMessageFragment();
+                                privateMessageController.updatePrivateMessagesFragment();
                             }
                             if (privateMessageController != null) {
                                 //privateMessageController.printMessage(message); //PRINT MESSAGE
@@ -405,7 +405,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void onOnlineUserClicked(User user) {
         String userName = user.getName();
-        Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
+        //Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
 
         Channel currentChannel = modelBuilder.getSelectedPrivateChat();
         boolean chatExisting = false;
@@ -416,7 +416,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (channel.getName().equals(selectedUserName)) {
                 modelBuilder.setSelectedPrivateChat(channel);
                 updatePrivateChatRecyclerView();
-                privateMessageController.updatePrivateMessageFragment();
+                privateMessageController.changePrivateChatFragment();
                 chatExisting = true;
                 break;
             }
@@ -437,7 +437,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             modelBuilder.getPersonalUser().withPrivateChat(modelBuilder.getSelectedPrivateChat());
             chatExisting = true;
             updatePrivateChatRecyclerView();
-            privateMessageController.updatePrivateMessageFragment();
+            privateMessageController.changePrivateChatFragment();
         }
         drawer.closeDrawer(findViewById(R.id.nav_view_right));
     }
@@ -476,10 +476,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         modelBuilder.setSelectedPrivateChat(selectedChannel);
         if (modelBuilder.getState() == State.HomeView) {
             modelBuilder.setState(State.PrivateChatView);
+            updatePrivateChatRecyclerView();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     privateMessageController).commit();
         } else {
-            privateMessageController.updatePrivateMessageFragment();
+            updatePrivateChatRecyclerView();
+            privateMessageController.changePrivateChatFragment();
         }
         drawer.closeDrawer(findViewById(R.id.nav_view_left));
     }

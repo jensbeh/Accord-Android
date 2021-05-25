@@ -1,11 +1,13 @@
 package com.accord.adapter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.ModelBuilder;
@@ -82,11 +84,11 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
     }
 
     // Replace the contents of a view (invoked by the layout manager)
+    @SuppressLint("ResourceAsColor")
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         // Get element from your local data at this position and replace the
         // contents of the view with that element
-        //viewHolder.serverName.setText(modelBuilder.getPersonalUser().getServer().get(position).getName());
         Channel channel = modelBuilder.getPersonalUser().getPrivateChat().get(position);
         viewHolder.userName.setText(channel.getName());
         if (channel.getMessage().size() > 0) {
@@ -96,11 +98,10 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
         }
         if(modelBuilder.getSelectedPrivateChat() != null && modelBuilder.getSelectedPrivateChat().getName().equals(channel.getName())) {
             //make chat background light grey
-            //viewHolder.serverCard.setCardBackgroundColor(Color.BLUE);
+            viewHolder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.privateChatClicked));
         } else {
             //reset chat background
-            //viewHolder.serverCard.setCardBackgroundColor(Color.RED);
-
+            viewHolder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.privateChat));
         }
 
     }

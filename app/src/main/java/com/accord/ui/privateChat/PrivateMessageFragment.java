@@ -37,12 +37,6 @@ public class PrivateMessageFragment extends Fragment {
         this.modelBuilder = modelBuilder;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        //getActivity()).afterFragmentComplete();
-    }
-
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -82,17 +76,32 @@ public class PrivateMessageFragment extends Fragment {
         });
         context = view.getContext();
 
-        updatePrivateMessageFragment();
+        updatePrivateMessagesFragment();
     }
 
 
-    public void updatePrivateMessageFragment() {
+    public void updatePrivateMessagesFragment() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (modelBuilder.getSelectedPrivateChat().getMessage().size() > 0) {
                     messageAdapter.notifyItemInserted(modelBuilder.getSelectedPrivateChat().getMessage().size());
                     rv_messages.scrollToPosition(modelBuilder.getSelectedPrivateChat().getMessage().size() - 1);
+                }
+            }
+        });
+    }
+
+    public void changePrivateChatFragment() {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (modelBuilder.getSelectedPrivateChat().getMessage().size() > 0) {
+                    messageAdapter.notifyItemRangeRemoved(0, modelBuilder.getSelectedPrivateChat().getMessage().size());
+                    messageAdapter.notifyDataSetChanged();
+                    rv_messages.scrollToPosition(modelBuilder.getSelectedPrivateChat().getMessage().size() - 1);
+                } else {
+                    messageAdapter.notifyDataSetChanged();
                 }
             }
         });
