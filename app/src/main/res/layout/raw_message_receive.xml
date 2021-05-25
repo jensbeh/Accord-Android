@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="16dp">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cv_message_receive"
@@ -18,21 +19,33 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+    <LinearLayout
+            android:id="@+id/layout_gchat_container_other"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_message_receive"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:maxWidth="280dp"
-            android:paddingStart="8dp"
-            android:paddingTop="3dp"
-            android:paddingEnd="9dp"
-            android:paddingBottom="6dp"
-            android:text="@string/receiveMessage"
-            android:textColor="@color/white"
-            android:textSize="16sp" />
+            <TextView
+                android:id="@+id/tv_message_receive"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:maxWidth="280dp"
+                android:text="@string/receiveMessage"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:elegantTextHeight="true"
+                android:minLines="1"
+                android:singleLine="false"
+                android:ellipsize="end" />
+
+        </LinearLayout>
 
     </androidx.cardview.widget.CardView>
+
 
     <TextView
         android:id="@+id/tv_timestamp_receive"
@@ -43,6 +56,5 @@
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/cv_message_receive" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

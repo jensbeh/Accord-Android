@@ -157,7 +157,8 @@ public class MessageRecyclerViewAdapter extends RecyclerView.Adapter<MessageRecy
         }
 
         void bind(Message message) {
-            messageText.setText(message.getMessage());
+            String str = message.getMessage();
+            messageText.setText(str);
             timestamp.setText(message.getCurrentTime());
         }
     }

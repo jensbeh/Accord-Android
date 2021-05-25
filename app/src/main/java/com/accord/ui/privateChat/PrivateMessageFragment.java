@@ -90,8 +90,10 @@ public class PrivateMessageFragment extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                messageAdapter.notifyDataSetChanged();
-                rv_messages.scrollToPosition(modelBuilder.getSelectedPrivateChat().getMessage().size() - 1);
+                if (modelBuilder.getSelectedPrivateChat().getMessage().size() > 0) {
+                    messageAdapter.notifyItemInserted(modelBuilder.getSelectedPrivateChat().getMessage().size());
+                    rv_messages.scrollToPosition(modelBuilder.getSelectedPrivateChat().getMessage().size() - 1);
+                }
             }
         });
     }
@@ -111,6 +113,11 @@ public class PrivateMessageFragment extends Fragment {
     }
 
     public void clearMessageField() {
-        this.et_inputMessage.setText("");
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                et_inputMessage.getEditableText().clear();
+            }
+        });
     }
 }
