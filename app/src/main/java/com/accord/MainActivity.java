@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -75,6 +76,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private TextView text_username;
     private TextView text_userKey;
     private Button button_logout;
+    private CardView button_Home;
+    private CardView button_addServer;
     private NavigationView navigationViewRight;
     private RecyclerView rv_server;
     private RecyclerView rv_onlineUser;
@@ -117,6 +120,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         rv_onlineUser = navigationViewRight.findViewById(R.id.rv_onlineUser);
         rv_privateChats = navigationViewLeft.findViewById(R.id.rv_privateChats);
         button_logout = navigationViewLeft.findViewById(R.id.button_logout);
+        button_Home = navigationViewLeft.findViewById(R.id.button_Home);
+        button_addServer = navigationViewLeft.findViewById(R.id.button_add);
         text_username = navigationViewLeft.findViewById(R.id.text_username);
         text_userKey = navigationViewLeft.findViewById(R.id.text_userKey);
 
@@ -128,6 +133,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         serverController = new ServerFragment(modelBuilder);
 
         button_logout.setOnClickListener(this::onLogoutButtonClick);
+        button_Home.setOnClickListener(this::onHomeButtonClick);
+        button_addServer.setOnClickListener(this::onAddServerButtonClick);
 
         timeFormatter = new SimpleDateFormat("HH:mm");
 
@@ -201,6 +208,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         };
         drawer.addDrawerListener(mDrawerToggle);
+    }
+
+    private void onHomeButtonClick(View view) {
+        if (modelBuilder.getState() != State.HomeView && modelBuilder.getPersonalUser().getPrivateChat().size() == 0) {
+            Toast.makeText(this, "to Home", Toast.LENGTH_SHORT).show();
+            modelBuilder.setState(State.HomeView);
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    homeController).commit();
+        } else if (modelBuilder.getState() != State.HomeView && modelBuilder.getPersonalUser().getPrivateChat().size() > 0) {
+            Toast.makeText(this, "to Chats", Toast.LENGTH_SHORT).show();
+            modelBuilder.setState(State.PrivateChatView);
+            updatePrivateChatRecyclerView();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    privateMessageController).commit();
+        }
     }
 
     private void setupPrivateChatWebSocket() {
@@ -535,6 +557,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toast.makeText(MainActivity.this, serverId, Toast.LENGTH_LONG).show();
     }
 
+    private void onAddServerButtonClick(View view) {
+        // TODO Server erstellen
+        Toast.makeText(this, "add Server", Toast.LENGTH_SHORT).show();
+    }
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
@@ -559,8 +586,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public void onBackPressed() {
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
+        if (drawer.isDrawerOpen(findViewById(R.id.nav_view_left))) {
+            button_logout.callOnClick();
+        } else if (drawer.isDrawerOpen(findViewById(R.id.nav_view_right))) {
+            drawer.closeDrawer(findViewById(R.id.nav_view_right));
+        } else if (!(drawer.isDrawerOpen(findViewById(R.id.nav_view_right)) && !(drawer.isDrawerOpen(findViewById(R.id.nav_view_right))))) {
+            drawer.openDrawer(findViewById(R.id.nav_view_left));
         } else {
             super.onBackPressed();
         }
@@ -588,6 +619,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void updatePrivateChatRecyclerView() {
         if (modelBuilder.getState() != State.ServerView) {
+            if (rv_privateChats.getVisibility() == View.INVISIBLE) {
+                rv_privateChats.setVisibility(View.VISIBLE);
+            }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

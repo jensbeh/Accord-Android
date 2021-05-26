@@ -10,6 +10,7 @@ import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.accord.MainActivity;
 import com.accord.ModelBuilder;
 import com.accord.R;
 import com.accord.model.Server;
@@ -91,7 +92,7 @@ public class ServerRecyclerViewAdapter extends RecyclerView.Adapter<ServerRecycl
         viewHolder.serverName.setText(modelBuilder.getPersonalUser().getServer().get(position).getName());
         //viewHolder.onlineStatus.setImageResource(R.drawable.online_status_circle);
 
-        if (modelBuilder.getCurrentServer() == modelBuilder.getPersonalUser().getServer().get(position)) {
+        if (modelBuilder.getCurrentServer() == modelBuilder.getPersonalUser().getServer().get(position) && modelBuilder.getState() == MainActivity.State.ServerView) {
             viewHolder.serverCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.privateChatClicked));
         } else {
             viewHolder.serverCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.privateChat));

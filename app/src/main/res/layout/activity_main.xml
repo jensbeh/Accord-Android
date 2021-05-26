@@ -61,16 +61,30 @@
                             android:id="@+id/button_Home"
                             android:layout_width="80dp"
                             android:layout_height="80dp"
+                            android:layout_gravity="center"
                             android:layout_marginStart="3dp"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="10dp"
                             android:layout_marginEnd="3dp"
-                            android:background="@drawable/logout_button"
-                            android:text="@string/logout"
-                            android:textColor="@color/white"
+                            android:backgroundTint="@color/addServerButton"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?android:attr/selectableItemBackground"
+                            app:cardCornerRadius="100dp"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintHorizontal_bias="0.0"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
+                            app:layout_constraintTop_toTopOf="parent" >
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="9dp"
+                                android:layout_marginTop="8dp"
+                                android:layout_marginEnd="11dp"
+                                android:layout_marginBottom="12dp"
+                                android:src="@drawable/ic_action_home" />
+
+                        </androidx.cardview.widget.CardView>
                     </LinearLayout>
 
 
