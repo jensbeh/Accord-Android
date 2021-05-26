@@ -7,14 +7,11 @@
     <!-- A CardView that contains a TextView -->
     <androidx.cardview.widget.CardView
         android:id="@+id/card_view_server"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_gravity="center"
-        android:layout_marginStart="5dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="2dp"
         card_view:cardCornerRadius="50dp"
-        card_view:cardBackgroundColor="@color/privateChatClicked">
+        card_view:cardBackgroundColor="@color/red">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"

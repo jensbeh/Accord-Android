@@ -1,12 +1,12 @@
 package com.accord.adapter;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -38,6 +38,7 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private final TextView userName;
         private final TextView lastMessage;
+        private final ConstraintLayout itemBackground;
         private boolean longClick;
 
         public ViewHolder(View view) {
@@ -47,6 +48,7 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
             view.setOnLongClickListener(this);
             userName = (TextView) view.findViewById(R.id.tv_rv_userNameChats);
             lastMessage = (TextView) view.findViewById(R.id.tv_rv_lastMessageChats);
+            itemBackground = (ConstraintLayout) view.findViewById(R.id.background_privateChats);
         }
 
         @Override
@@ -84,7 +86,6 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
     }
 
     // Replace the contents of a view (invoked by the layout manager)
-    @SuppressLint("ResourceAsColor")
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         // Get element from your local data at this position and replace the
@@ -96,12 +97,12 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
         } else {
             viewHolder.lastMessage.setText("");
         }
-        if(modelBuilder.getSelectedPrivateChat() != null && modelBuilder.getSelectedPrivateChat().getName().equals(channel.getName())) {
-            //make chat background light grey
-            viewHolder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.privateChatClicked));
+        if (modelBuilder.getSelectedPrivateChat() != null && modelBuilder.getSelectedPrivateChat().getName().equals(channel.getName())) {
+            //make privateChat background when clicked
+            viewHolder.itemBackground.setBackground(ContextCompat.getDrawable(context, R.drawable.private_chat_box_clicked_rounded_corner));
         } else {
-            //reset chat background
-            viewHolder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.privateChat));
+            //reset privateChat background
+            viewHolder.itemBackground.setBackgroundColor(ContextCompat.getColor(context, R.color.privateChat));
         }
 
     }

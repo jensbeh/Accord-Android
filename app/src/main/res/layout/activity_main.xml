@@ -35,51 +35,119 @@
             android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="275dp"
-                android:layout_height="635dp"
+                android:layout_width="match_parent"
+                android:layout_height="643dp"
                 android:background="@color/mainLayoutColor"
                 android:orientation="horizontal">
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:layout_gravity="center_vertical"
                     android:orientation="vertical">
 
-                    <androidx.cardview.widget.CardView
-                        android:id="@+id/button_Home"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:background="@drawable/logout_button"
-                        android:text="@string/logout"
-                        android:textColor="@color/white"
-                        app:layout_constraintBottom_toBottomOf="parent"
+
+                    <LinearLayout
+                        android:id="@+id/linearLayout2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:orientation="vertical"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintHorizontal_bias="0.13"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintVertical_bias="0.98" />
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/button_Home"
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            android:layout_marginStart="3dp"
+                            android:layout_marginTop="4dp"
+                            android:layout_marginEnd="3dp"
+                            android:background="@drawable/logout_button"
+                            android:text="@string/logout"
+                            android:textColor="@color/white"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintHorizontal_bias="0.0"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </LinearLayout>
+
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_server"
-                        android:layout_width="match_parent"
-                        android:layout_height="249dp"
+                        android:layout_width="82dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="80dp"
                         android:choiceMode="singleChoice"
-                        app:layout_constraintEnd_toStartOf="@+id/rv_privateChats"
-                        app:layout_constraintHorizontal_bias="0.0"
+                        app:layout_constrainedHeight="true"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toBottomOf="@+id/linearLayout2"
+                        app:layout_constraintVertical_bias="0.0"
+                        tools:listitem="@layout/raw_server_item" />
 
-                </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/linearLayout"
+                        android:layout_width="87dp"
+                        android:layout_height="0dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginEnd="3dp"
+                        android:orientation="vertical"
+                        app:layout_constrainedHeight="true"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/rv_server">
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/button_add"
+                            android:layout_width="55dp"
+                            android:layout_height="55dp"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"
+                            android:backgroundTint="@color/addServerButton"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?android:attr/selectableItemBackground"
+                            app:cardCornerRadius="100dp">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="5dp"
+                                android:layout_marginTop="5dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_marginBottom="5dp"
+                                android:src="@drawable/ic_action_add" />
+                        </androidx.cardview.widget.CardView>
+                    </LinearLayout>
+
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rv_privateChats"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginEnd="3dp"
+                    android:background="@drawable/rv_private_chats_rounded_corner"
                     android:choiceMode="singleChoice"
+                    android:paddingLeft="3dp"
+                    android:paddingTop="0dp"
+                    android:paddingRight="3dp"
                     app:layout_constraintBottom_toBottomOf="@+id/rv_server"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintVertical_bias="0.0" />
+                    app:layout_constraintVertical_bias="0.0"
+                    tools:listitem="@layout/raw_private_chat_item" />
 
 
             </LinearLayout>
@@ -87,7 +155,7 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/mainLayoutColor"
+                android:background="@color/very_dark_grey"
                 android:orientation="horizontal">
 
                 <androidx.appcompat.widget.AppCompatButton
@@ -131,31 +199,32 @@
                     app:layout_constraintVertical_bias="0.707" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>
-</com.google.android.material.navigation.NavigationView>
+    </com.google.android.material.navigation.NavigationView>
 
-<com.google.android.material.navigation.NavigationView
-android:fitsSystemWindows="true"
-android:id="@+id/nav_view_right"
-android:layout_gravity="right"
-android:layout_height="match_parent"
-android:layout_width="wrap_content">
-
-<androidx.constraintlayout.widget.ConstraintLayout
-    android:background="@color/mainLayoutColor"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent"
-    android:orientation="vertical">
-
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:choiceMode="singleChoice"
-        android:id="@+id/rv_onlineUser"
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view_right"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_width="match_parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_gravity="right"
+        android:fitsSystemWindows="true">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/mainLayoutColor"
+            android:orientation="vertical">
 
-</com.google.android.material.navigation.NavigationView></androidx.drawerlayout.widget.DrawerLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_onlineUser"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:choiceMode="singleChoice"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.navigation.NavigationView>
+</androidx.drawerlayout.widget.DrawerLayout>

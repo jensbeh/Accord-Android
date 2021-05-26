@@ -1,13 +1,13 @@
 package com.accord.adapter;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.ModelBuilder;
@@ -92,9 +92,9 @@ public class ServerRecyclerViewAdapter extends RecyclerView.Adapter<ServerRecycl
         //viewHolder.onlineStatus.setImageResource(R.drawable.online_status_circle);
 
         if (modelBuilder.getCurrentServer() == modelBuilder.getPersonalUser().getServer().get(position)) {
-            viewHolder.serverCard.setCardBackgroundColor(Color.BLUE);
+            viewHolder.serverCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.privateChatClicked));
         } else {
-            viewHolder.serverCard.setCardBackgroundColor(Color.RED);
+            viewHolder.serverCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.privateChat));
         }
 
     }
