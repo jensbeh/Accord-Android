@@ -71,7 +71,6 @@ public class CurrentUser
         if (!this.user.contains(value))
         {
             this.user.add(value);
-            value.setCurrentUser(this);
             this.firePropertyChange(PROPERTY_USER, null, value);
         }
         return this;
@@ -99,7 +98,6 @@ public class CurrentUser
     {
         if (this.user != null && this.user.remove(value))
         {
-            value.setCurrentUser(null);
             this.firePropertyChange(PROPERTY_USER, value, null);
         }
         return this;
@@ -137,7 +135,6 @@ public class CurrentUser
         if (!this.server.contains(value))
         {
             this.server.add(value);
-            value.setCurrentUser(this);
             this.firePropertyChange(PROPERTY_SERVER, null, value);
         }
         return this;
@@ -165,7 +162,6 @@ public class CurrentUser
     {
         if (this.server != null && this.server.remove(value))
         {
-            value.setCurrentUser(null);
             this.firePropertyChange(PROPERTY_SERVER, value, null);
         }
         return this;
@@ -203,7 +199,6 @@ public class CurrentUser
         if (!this.privateChat.contains(value))
         {
             this.privateChat.add(value);
-            value.setCurrentUser(this);
             this.firePropertyChange(PROPERTY_PRIVATE_CHAT, null, value);
         }
         return this;
@@ -231,7 +226,6 @@ public class CurrentUser
     {
         if (this.privateChat != null && this.privateChat.remove(value))
         {
-            value.setCurrentUser(null);
             this.firePropertyChange(PROPERTY_PRIVATE_CHAT, value, null);
         }
         return this;

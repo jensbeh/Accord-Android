@@ -11,15 +11,11 @@ public class Channel
 {
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_ID = "id";
-    public static final String PROPERTY_CATEGORIES = "categories";
     public static final String PROPERTY_MESSAGE = "message";
-    public static final String PROPERTY_CURRENT_USER = "currentUser";
     private String name;
     private String id;
-    private Categories categories;
     protected PropertyChangeSupport listeners;
     private List<Message> message;
-    private CurrentUser currentUser;
     private int unreadMessagesCounter;
 
     public String getName()
@@ -58,33 +54,6 @@ public class Channel
         return this;
     }
 
-    public Categories getCategories()
-    {
-        return this.categories;
-    }
-
-    public Channel setCategories(Categories value)
-    {
-        if (this.categories == value)
-        {
-            return this;
-        }
-
-        final Categories oldValue = this.categories;
-        if (this.categories != null)
-        {
-            this.categories = null;
-            oldValue.withoutChannel(this);
-        }
-        this.categories = value;
-        if (value != null)
-        {
-            value.withChannel(this);
-        }
-        this.firePropertyChange(PROPERTY_CATEGORIES, oldValue, value);
-        return this;
-    }
-
     public List<Message> getMessage()
     {
         return this.message != null ? Collections.unmodifiableList(this.message) : Collections.emptyList();
@@ -99,7 +68,6 @@ public class Channel
         if (!this.message.contains(value))
         {
             this.message.add(value);
-            value.setChannel(this);
             this.firePropertyChange(PROPERTY_MESSAGE, null, value);
         }
         return this;
@@ -127,7 +95,6 @@ public class Channel
     {
         if (this.message != null && this.message.remove(value))
         {
-            value.setChannel(null);
             this.firePropertyChange(PROPERTY_MESSAGE, value, null);
         }
         return this;
@@ -148,33 +115,6 @@ public class Channel
         {
             this.withoutMessage(item);
         }
-        return this;
-    }
-
-    public CurrentUser getCurrentUser()
-    {
-        return this.currentUser;
-    }
-
-    public Channel setCurrentUser(CurrentUser value)
-    {
-        if (this.currentUser == value)
-        {
-            return this;
-        }
-
-        final CurrentUser oldValue = this.currentUser;
-        if (this.currentUser != null)
-        {
-            this.currentUser = null;
-            oldValue.withoutPrivateChat(this);
-        }
-        this.currentUser = value;
-        if (value != null)
-        {
-            value.withPrivateChat(this);
-        }
-        this.firePropertyChange(PROPERTY_CURRENT_USER, oldValue, value);
         return this;
     }
 
@@ -208,8 +148,6 @@ public class Channel
 
     public void removeYou()
     {
-        this.setCategories(null);
-        this.setCurrentUser(null);
         this.withoutMessage(new ArrayList<>(this.getMessage()));
     }
 
@@ -220,5 +158,14 @@ public class Channel
     public Channel setUnreadMessagesCounter(int unreadMessagesCounter) {
         this.unreadMessagesCounter = unreadMessagesCounter;
         return this;
+    }
+
+    public Channel setMessages(List<Message> list) {
+        this.message = list;
+        return this;
+    }
+
+    public List<Message> getMessages() {
+        return this.message;
     }
 }

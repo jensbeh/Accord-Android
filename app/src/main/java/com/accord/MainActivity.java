@@ -1,5 +1,6 @@
 package com.accord;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -35,10 +36,12 @@ import com.accord.ui.privateChat.PrivateMessageFragment;
 import com.accord.ui.server.ServerFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -86,8 +89,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private PrivateChatRecyclerViewAdapter privateChatsRecyclerViewAdapter;
     private ServerRecyclerViewAdapter serverRecyclerViewAdapter;
     private SimpleDateFormat timeFormatter;
-    private SharedPreferences mPrefs;
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
+    private String KEY_PREFS = "privateChats";
 
+    @SuppressLint("CommitPrefEdits")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -137,6 +143,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         button_addServer.setOnClickListener(this::onAddServerButtonClick);
 
         timeFormatter = new SimpleDateFormat("HH:mm");
+
+        sharedPreferences = this.getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+
+        loadData();
 
         showUsers();
         setupPrivateChatRecyclerView();
@@ -598,12 +609,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void onLogoutButtonClick(View view) {
+        saveData();
+
         restClient.doLogout(modelBuilder.getPersonalUser().getUserKey(), new RestClient.PostCallback() {
             @Override
             public void onSuccess(String status, Map<String, String> data) {
                 System.out.print(status);
                 System.out.print(data);
 
+                ArrayList<Channel> list = new ArrayList<>(modelBuilder.getPersonalUser().getPrivateChat());
                 Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
                 startActivity(intent);
                 overridePendingTransition(R.anim.activity_exit_backwards, R.anim.activity_enter_backwards);
@@ -640,5 +654,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 serverRecyclerViewAdapter.notifyDataSetChanged();
             }
         });
+    }
+
+
+    private void saveData() {
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        ArrayList<Channel> channelArrayList = new ArrayList<>(modelBuilder.getPersonalUser().getPrivateChat().size());
+        for (Channel channel : modelBuilder.getPersonalUser().getPrivateChat()) {
+            Channel newChannel = new Channel().setName(channel.getName()).setId(channel.getId()).setMessages(channel.getMessages()).setUnreadMessagesCounter(channel.getUnreadMessagesCounter());
+            channelArrayList.add(newChannel);
+        }
+        String json = gson.toJson(channelArrayList);
+        editor.putString(modelBuilder.getPersonalUser().getName(), json);
+        editor.apply();
+    }
+
+
+
+    private void loadData() {
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = sharedPreferences.getString(modelBuilder.getPersonalUser().getName(), null);
+        Type type = new TypeToken<ArrayList<Channel>>() {}.getType();
+        ArrayList<Channel> mExampleList = gson.fromJson(json, type);
+        if (mExampleList != null) {
+            modelBuilder.getPersonalUser().withPrivateChat(mExampleList);
+        }
     }
 }

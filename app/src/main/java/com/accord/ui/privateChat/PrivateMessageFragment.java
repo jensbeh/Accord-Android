@@ -17,7 +17,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.accord.ModelBuilder;
 import com.accord.R;
 import com.accord.adapter.MessageRecyclerViewAdapter;
-import com.accord.model.Channel;
 import com.accord.model.Message;
 
 import org.json.JSONException;
@@ -70,8 +69,7 @@ public class PrivateMessageFragment extends Fragment {
             public void onItemLongClick(View view, Message message) {
                 String messageTime = message.getCurrentTime();
                 String messageFrom = message.getFrom();
-                Channel messageChannel = message.getChannel();
-                Toast.makeText(context, messageTime + " - " + messageFrom + " - " + messageChannel.getName(), Toast.LENGTH_LONG).show();
+                Toast.makeText(context, messageTime + " - " + messageFrom, Toast.LENGTH_LONG).show();
             }
         });
         context = view.getContext();

@@ -14,14 +14,12 @@ public class Server
     public static final String PROPERTY_OWNER = "owner";
     public static final String PROPERTY_CATEGORIES = "categories";
     public static final String PROPERTY_USER = "user";
-    public static final String PROPERTY_CURRENT_USER = "currentUser";
     private String name;
     private String id;
     private String owner;
     private List<Categories> categories;
     private List<User> user;
     protected PropertyChangeSupport listeners;
-    private CurrentUser currentUser;
 
     public String getName()
     {
@@ -91,7 +89,6 @@ public class Server
         if (!this.categories.contains(value))
         {
             this.categories.add(value);
-            value.setServer(this);
             this.firePropertyChange(PROPERTY_CATEGORIES, null, value);
         }
         return this;
@@ -119,7 +116,6 @@ public class Server
     {
         if (this.categories != null && this.categories.remove(value))
         {
-            value.setServer(null);
             this.firePropertyChange(PROPERTY_CATEGORIES, value, null);
         }
         return this;
@@ -157,7 +153,6 @@ public class Server
         if (!this.user.contains(value))
         {
             this.user.add(value);
-            value.withServer(this);
             this.firePropertyChange(PROPERTY_USER, null, value);
         }
         return this;
@@ -185,7 +180,6 @@ public class Server
     {
         if (this.user != null && this.user.remove(value))
         {
-            value.withoutServer(this);
             this.firePropertyChange(PROPERTY_USER, value, null);
         }
         return this;
@@ -206,33 +200,6 @@ public class Server
         {
             this.withoutUser(item);
         }
-        return this;
-    }
-
-    public CurrentUser getCurrentUser()
-    {
-        return this.currentUser;
-    }
-
-    public Server setCurrentUser(CurrentUser value)
-    {
-        if (this.currentUser == value)
-        {
-            return this;
-        }
-
-        final CurrentUser oldValue = this.currentUser;
-        if (this.currentUser != null)
-        {
-            this.currentUser = null;
-            oldValue.withoutServer(this);
-        }
-        this.currentUser = value;
-        if (value != null)
-        {
-            value.withServer(this);
-        }
-        this.firePropertyChange(PROPERTY_CURRENT_USER, oldValue, value);
         return this;
     }
 
@@ -269,6 +236,5 @@ public class Server
     {
         this.withoutCategories(new ArrayList<>(this.getCategories()));
         this.withoutUser(new ArrayList<>(this.getUser()));
-        this.setCurrentUser(null);
     }
 }

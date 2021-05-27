@@ -11,11 +11,9 @@ public class Categories
 {
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_ID = "id";
-    public static final String PROPERTY_SERVER = "server";
     public static final String PROPERTY_CHANNEL = "channel";
     private String name;
     private String id;
-    private Server server;
     protected PropertyChangeSupport listeners;
     private List<Channel> channel;
 
@@ -55,33 +53,6 @@ public class Categories
         return this;
     }
 
-    public Server getServer()
-    {
-        return this.server;
-    }
-
-    public Categories setServer(Server value)
-    {
-        if (this.server == value)
-        {
-            return this;
-        }
-
-        final Server oldValue = this.server;
-        if (this.server != null)
-        {
-            this.server = null;
-            oldValue.withoutCategories(this);
-        }
-        this.server = value;
-        if (value != null)
-        {
-            value.withCategories(this);
-        }
-        this.firePropertyChange(PROPERTY_SERVER, oldValue, value);
-        return this;
-    }
-
     public List<Channel> getChannel()
     {
         return this.channel != null ? Collections.unmodifiableList(this.channel) : Collections.emptyList();
@@ -96,7 +67,6 @@ public class Categories
         if (!this.channel.contains(value))
         {
             this.channel.add(value);
-            value.setCategories(this);
             this.firePropertyChange(PROPERTY_CHANNEL, null, value);
         }
         return this;
@@ -124,7 +94,6 @@ public class Categories
     {
         if (this.channel != null && this.channel.remove(value))
         {
-            value.setCategories(null);
             this.firePropertyChange(PROPERTY_CHANNEL, value, null);
         }
         return this;
@@ -178,7 +147,6 @@ public class Categories
 
     public void removeYou()
     {
-        this.setServer(null);
         this.withoutChannel(new ArrayList<>(this.getChannel()));
     }
 }
