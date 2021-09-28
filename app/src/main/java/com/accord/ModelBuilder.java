@@ -56,6 +56,24 @@ public class ModelBuilder {
         return newServer;
     }
 
+    public User buildServerUser(Server server, String name, String id, Boolean status, String description) {
+        for (User user : server.getUser()) {
+            if (user.getId().equals(id)) {
+                if (user.isStatus() == status) {
+                    return user;
+                } else {
+                    server.withoutUser(user);
+                    User updatedUser = new User().setName(name).setId(id).setStatus(status).setDescription(description);
+                    server.withUser(updatedUser);
+                    return updatedUser;
+                }
+            }
+        }
+        User newUser = new User().setName(name).setId(id).setStatus(status).setDescription(description);
+        server.withUser(newUser);
+        return newUser;
+    }
+
     public void setCurrentServer(Server currentServer) {
         this.currentServer = currentServer;
     }
@@ -110,6 +128,7 @@ public class ModelBuilder {
     public void setHomeController(HomeFragment homeController) {
         this.homeController = homeController;
     }
+
     public HomeFragment getHomeController() {
         return homeController;
     }
@@ -117,6 +136,7 @@ public class ModelBuilder {
     public void setPrivateMessageController(PrivateMessageFragment privateMessageController) {
         this.privateMessageController = privateMessageController;
     }
+
     public PrivateMessageFragment getPrivateMessageController() {
         return privateMessageController;
     }
@@ -124,6 +144,7 @@ public class ModelBuilder {
     public void setServerController(ServerFragment serverController) {
         this.serverController = serverController;
     }
+
     public ServerFragment getServerController() {
         return serverController;
     }

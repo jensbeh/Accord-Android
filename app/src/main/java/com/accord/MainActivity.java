@@ -28,8 +28,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.accord.adapter.OnlineUserRecyclerViewAdapter;
 import com.accord.adapter.PrivateChatRecyclerViewAdapter;
 import com.accord.adapter.ServerRecyclerViewAdapter;
+import com.accord.model.Categories;
 import com.accord.model.Channel;
+import com.accord.model.Message;
 import com.accord.model.Server;
+import com.accord.model.ServerChannel;
 import com.accord.model.User;
 import com.accord.net.rest.RestClient;
 import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
@@ -41,10 +44,15 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -157,9 +165,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // Get online users & servers and view them
         loadOnlineUsers();
-        loadServer(() -> {
-            System.out.println("All server loaded!");
-        });
+        loadServer(() -> System.out.println("All server loaded!"));
 
         // add navigationBar listener
         ActionBarDrawerToggle mDrawerToggle = new ActionBarDrawerToggle(this, drawer, R.string.drawer_open, R.string.drawer_close) {
@@ -205,8 +211,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         void onSuccess();
     }
 
+    /**
+     * Update the builder and get the ServerUser as well as the categories. Also sets their online and offline Status.
+     */
+    public interface ServerUserCallback {
+        void onSuccess(String status);
+    }
+
     private void loadServer(FullyLoadedCallback fullyLoadedCallback) {
-        restClient.doGetServer(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
+        restClient.doGetServer(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
             @Override
             public void onSuccess(String status, List data) {
                 System.out.print(status);
@@ -216,10 +229,210 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     String serverName = serverMap.get("name");
                     String serverId = serverMap.get("id");
 
-                    modelBuilder.buildServer(serverName, serverId);
+                    Server server = modelBuilder.buildServer(serverName, serverId);
+                    loadServerUsers(server, new ServerUserCallback() {
+                        @Override
+                        public void onSuccess(String status) {
+                            loadCategories(server, new CategoriesLoadedCallback() {
+                                @Override
+                                public void onSuccess(String status) {
+                                    fullyLoadedCallback.onSuccess();
+                                }
+                            });
+                        }
+                    });
                 }
                 updateServerRV();
-                fullyLoadedCallback.onSuccess();
+            }
+
+            @Override
+            public void onFailed(Throwable error) {
+                System.out.print("Error: " + error.getMessage());
+            }
+        });
+    }
+
+    private void loadServerUsers(Server server, ServerUserCallback serverUserCallback) {
+        restClient.doGetServerUsers(server.getId(), modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithObject() {
+
+            @Override
+            public void onSuccess(String status, Object data) {
+                System.out.print(status);
+                System.out.print(data);
+
+                try {
+                    Gson gson = new Gson();
+                    JSONObject dataJSON = new JSONObject(gson.toJsonTree(data).getAsJsonObject().toString());
+
+                    server.setOwner(dataJSON.getString("owner"));
+
+                    JSONArray members = dataJSON.getJSONArray("members");
+
+                    for (int i = 0; i < members.length(); i++) {
+                        String id = members.getJSONObject(i).getString("id");
+                        String description = members.getJSONObject(i).getString("description");
+                        String name = members.getJSONObject(i).getString("name");
+                        boolean online = Boolean.getBoolean(members.getJSONObject(i).getString("online"));
+                        modelBuilder.buildServerUser(server, name, id, online, description);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                serverUserCallback.onSuccess(status);
+            }
+
+            @Override
+            public void onFailed(Throwable error) {
+                System.out.print("Error: " + error.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Callback, when all category information are loaded
+     */
+    public interface CategoriesLoadedCallback {
+        void onSuccess(String status);
+    }
+
+    private void loadCategories(Server server, CategoriesLoadedCallback categoriesLoadedCallback) {
+        restClient.doGetCategories(server.getId(), modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+
+            private int loadedCategories = 0;
+
+            @Override
+            public void onSuccess(String status, List data) {
+                System.out.print(status);
+                System.out.print(data);
+
+                for (int i = 0; i < data.size(); i++) {
+                    Map<String, String> categoryMap = (Map<String, String>) data.get(i);
+                    String categoryName = categoryMap.get("name");
+                    String categoryId = categoryMap.get("id");
+
+                    Categories category = new Categories().setId(categoryId).setName(categoryName);
+                    server.withCategories(category);
+
+                    loadChannel(server, category, status1 -> {
+                        loadedCategories++;
+                        if (loadedCategories == data.size()) {
+                            loadedCategories = 0;
+                            categoriesLoadedCallback.onSuccess(status1);
+                        }
+                    });
+                }
+                updateServerRV();
+//                fullyLoadedCallback.onSuccess();
+            }
+
+            @Override
+            public void onFailed(Throwable error) {
+                System.out.print("Error: " + error.getMessage());
+            }
+        });
+    }
+
+
+    /**
+     * Callback, when all channel information are loaded
+     */
+    public interface ChannelLoadedCallback {
+        void onSuccess(String status);
+    }
+
+    private void loadChannel(Server server, Categories category, ChannelLoadedCallback channelLoadedCallback) {
+        restClient.doGetChannels(server.getId(), category.getId(), modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+
+            private int loadedChannel = 0;
+
+            @Override
+            public void onSuccess(String status, List data) {
+                System.out.print(status);
+                System.out.print(data);
+                for (int i = 0; i < data.size(); i++) {
+                    Map<String, Object> channelsMap = (Map<String, Object>) data.get(i);
+                    String channelName = (String) channelsMap.get("name");
+                    String channelId = (String) channelsMap.get("id");
+                    String channelType = (String) channelsMap.get("type");
+                    boolean channelIsPrivileged = (boolean) channelsMap.get("privileged");
+                    ServerChannel serverChannel = new ServerChannel();
+                    serverChannel.setId(channelId);
+                    serverChannel.setName(channelName);
+                    serverChannel.setType(channelType);
+                    serverChannel.setPrivilege(channelIsPrivileged);
+                    category.withChannel(serverChannel);
+
+                    ArrayList<String> audioMemberIds = (ArrayList<String>) channelsMap.get("audioMembers");
+                    for (String id : audioMemberIds) {
+                        for (User user : server.getUser()) {
+                            if (user.getId().equals(id)) {
+                                serverChannel.withAudioMember(user);
+                            }
+                        }
+                    }
+
+                    ArrayList<String> membersIds = (ArrayList<String>) channelsMap.get("members");
+                    for (String id : membersIds) {
+                        for (User user : server.getUser()) {
+                            if (user.getId().equals(id)) {
+                                serverChannel.withPrivilegedUsers(user);
+                            }
+                        }
+                    }
+                    if (serverChannel.getType().equals("text")) {
+                        loadMessages(server, category, serverChannel, status1 -> {
+                            loadedChannel++;
+                            if (loadedChannel == data.size()) {
+                                loadedChannel = 0;
+                                channelLoadedCallback.onSuccess(status1);
+                            }
+                        });
+                    } else {
+                        loadedChannel++;
+                        if (loadedChannel == data.size()) {
+                            loadedChannel = 0;
+                            channelLoadedCallback.onSuccess("success");
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailed(Throwable error) {
+                System.out.print("Error: " + error.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Callback, when all message information are loaded
+     */
+    public interface MessagesLoadedCallback {
+        void onSuccess(String status);
+
+    }
+
+    private void loadMessages(Server server, Categories category, ServerChannel serverChannel, MessagesLoadedCallback messagesLoadedCallback) {
+        restClient.doGetMessages(new Date().getTime(), server.getId(), category.getId(), serverChannel.getId(), modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+
+            @Override
+            public void onSuccess(String status, List data) {
+                System.out.print(status);
+                System.out.print(data);
+                for (int i = 0; i < data.size(); i++) {
+                    Map<String, Object> messageMap = (Map<String, Object>) data.get(i);
+                    String from = (String) messageMap.get("from");
+                    double timestampDouble = (double) messageMap.get("timestamp");
+                    long timestamp = (long) timestampDouble;
+                    String text = (String) messageMap.get("text");
+                    String id = (String) messageMap.get("id");
+
+                    Message message = new Message().setMessage(text).setFrom(from).setTimestamp(timestamp).setId(id);
+                    serverChannel.withMessage(message);
+                }
+                messagesLoadedCallback.onSuccess(status);
             }
 
             @Override
@@ -269,7 +482,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      */
     public void loadOnlineUsers() {
         // Get Online User
-        restClient.doGetOnlineUser(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
+        restClient.doGetOnlineUser(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
             @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onSuccess(String status, List data) {
@@ -277,6 +490,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     Map<String, String> userMap = (Map<String, String>) data.get(i);
                     String userName = userMap.get("name");
                     String userId = userMap.get("id");
+                    String userDescription = userMap.get("description");
 
                     //if (!userName.equals(modelBuilder.getPersonalUser().getName())) {
                     modelBuilder.buildUser(userName, userId);
@@ -558,12 +772,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (rv_privateChats.getVisibility() == View.INVISIBLE) {
                 rv_privateChats.setVisibility(View.VISIBLE);
             }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    privateChatsRecyclerViewAdapter.notifyDataSetChanged();
-                }
-            });
+            runOnUiThread(() -> privateChatsRecyclerViewAdapter.notifyDataSetChanged());
         } else {
             rv_privateChats.setVisibility(View.INVISIBLE);
         }
@@ -573,12 +782,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * update the server recyclerView
      */
     private void updateServerRV() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                serverRecyclerViewAdapter.notifyDataSetChanged();
-            }
-        });
+        runOnUiThread(() -> serverRecyclerViewAdapter.notifyDataSetChanged());
     }
 
     /**

@@ -139,13 +139,13 @@ public class PrivateChatWebSocket extends Endpoint {
                     channelName = msg.getString("to");
                     message = new Message().setMessage(msg.getString("message")).
                             setFrom(msg.getString("from")).
-                            setTimestamp(msg.getInt("timestamp")).setCurrentTime(currentTime);
+                            setTimestamp(msg.getLong("timestamp")).setCurrentTime(currentTime);
                     builder.getPrivateMessageController().clearMessageField();
                 } else { // currentUser received
                     channelName = msg.getString("from");
                     message = new Message().setMessage(msg.getString("message")).
                             setFrom(msg.getString("from")).
-                            setTimestamp(msg.getInt("timestamp")).setCurrentTime(currentTime);
+                            setTimestamp(msg.getLong("timestamp")).setCurrentTime(currentTime);
                 }
                 for (Channel channel : builder.getPersonalUser().getPrivateChat()) {
                     if (channel.getName().equals(channelName)) {

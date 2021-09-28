@@ -1,12 +1,10 @@
 package com.accord.net.rest;
 
-import java.util.List;
-
-public class GetRequests {
+public class GetRequestsWithObject {
     private String userKey = null;
     private String status = null;
     private String message = null;
-    private List data = null;
+    private Object data = null;
 
     public String getStatus() {
         return status;
@@ -16,7 +14,7 @@ public class GetRequests {
         return message;
     }
 
-    public List getData() {
+    public Object getData() {
         return data;
     }
 }

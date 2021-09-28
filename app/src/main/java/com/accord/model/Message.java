@@ -8,10 +8,12 @@ public class Message
     public static final String PROPERTY_FROM = "from";
     public static final String PROPERTY_MESSAGE = "message";
     public static final String PROPERTY_TIMESTAMP = "timestamp";
+    public static final String PROPERTY_ID = "id";
     private String from;
     private String message;
+    private long timestamp;
+    private String id;
     protected PropertyChangeSupport listeners;
-    private int timestamp;
 
     private String currentTime;
 
@@ -51,21 +53,39 @@ public class Message
         return this;
     }
 
-    public int getTimestamp()
+    public long getTimestamp()
     {
         return this.timestamp;
     }
 
-    public Message setTimestamp(int value)
+    public Message setTimestamp(long value)
     {
         if (value == this.timestamp)
         {
             return this;
         }
 
-        final int oldValue = this.timestamp;
+        final long oldValue = this.timestamp;
         this.timestamp = value;
         this.firePropertyChange(PROPERTY_TIMESTAMP, oldValue, value);
+        return this;
+    }
+
+    public String getId()
+    {
+        return this.id;
+    }
+
+    public Message setId(String value)
+    {
+        if (Objects.equals(value, this.id))
+        {
+            return this;
+        }
+
+        final String oldValue = this.id;
+        this.id = value;
+        this.firePropertyChange(PROPERTY_ID, oldValue, value);
         return this;
     }
 

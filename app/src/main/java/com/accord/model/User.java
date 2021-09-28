@@ -8,9 +8,13 @@ public class User
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_ID = "id";
     public static final String PROPERTY_STATUS = "status";
+    public static final String PROPERTY_DESCRIPTION = "description";
+    public static final String PROPERTY_USER_VOLUME = "userVolume";
     private String name;
     private String id;
     private boolean status;
+    private String description;
+    private double userVolume;
     protected PropertyChangeSupport listeners;
 
     public String getName()
@@ -64,6 +68,42 @@ public class User
         final boolean oldValue = this.status;
         this.status = value;
         this.firePropertyChange(PROPERTY_STATUS, oldValue, value);
+        return this;
+    }
+
+    public String getDescription()
+    {
+        return this.description;
+    }
+
+    public User setDescription(String value)
+    {
+        if (Objects.equals(value, this.description))
+        {
+            return this;
+        }
+
+        final String oldValue = this.description;
+        this.description = value;
+        this.firePropertyChange(PROPERTY_DESCRIPTION, oldValue, value);
+        return this;
+    }
+
+    public double getUserVolume()
+    {
+        return this.userVolume;
+    }
+
+    public User setUserVolume(double value)
+    {
+        if (value == this.userVolume)
+        {
+            return this;
+        }
+
+        final double oldValue = this.userVolume;
+        this.userVolume = value;
+        this.firePropertyChange(PROPERTY_USER_VOLUME, oldValue, value);
         return this;
     }
 

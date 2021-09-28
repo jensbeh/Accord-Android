@@ -34,11 +34,19 @@ public class RestClient {
     // Interface
     public interface PostCallback {
         void onSuccess(String status, Map<String, String> data);
+
         void onFailed(Throwable error);
     }
 
-    public interface GetCallback {
+    public interface GetCallbackWithList {
         void onSuccess(String status, List data);
+
+        void onFailed(Throwable error);
+    }
+
+    public interface GetCallbackWithObject {
+        void onSuccess(String status, Object data);
+
         void onFailed(Throwable error);
     }
 
@@ -55,7 +63,7 @@ public class RestClient {
                         if (response.body().getStatus().equals(SUCCESS)) {
                             postCallback.onSuccess(response.body().getStatus(), response.body().getData());
                         } else {
-                            postCallback.onFailed(new Throwable("Can't Login! " + response.body().getMessage()));
+                            postCallback.onFailed(new Throwable("Can't login! " + response.body().getMessage()));
                         }
                     }
                 }
@@ -82,7 +90,7 @@ public class RestClient {
                         if (response.body().getStatus().equals(SUCCESS)) {
                             postCallback.onSuccess(response.body().getStatus(), response.body().getData());
                         } else {
-                            postCallback.onFailed(new Throwable("Can't Logout! " + response.body().getMessage()));
+                            postCallback.onFailed(new Throwable("Can't logout! " + response.body().getMessage()));
                         }
                     }
                 }
@@ -97,59 +105,168 @@ public class RestClient {
         });
     }
 
-    public void doGetOnlineUser(String userKey, final GetCallback getCallback) {
-        Call<GetRequests> call = restApi.getUsers(userKey);
+    public void doGetOnlineUser(String userKey, final GetCallbackWithList getCallbackWithList) {
+        Call<GetRequestsWithList> call = restApi.getUsers(userKey);
 
-        call.enqueue(new Callback<GetRequests>() {
+        call.enqueue(new Callback<GetRequestsWithList>() {
             @Override
-            public void onResponse(@NotNull Call<GetRequests> call, @NotNull Response<GetRequests> response) {
+            public void onResponse(@NotNull Call<GetRequestsWithList> call, @NotNull Response<GetRequestsWithList> response) {
                 if (response != null) {
                     // Action
-                    if (getCallback != null) {
+                    if (getCallbackWithList != null) {
                         if (response.body().getStatus().equals(SUCCESS)) {
-                            getCallback.onSuccess(response.body().getStatus(), response.body().getData());
+                            getCallbackWithList.onSuccess(response.body().getStatus(), response.body().getData());
                         } else {
-                            getCallback.onFailed(new Throwable("Can't Logout! " + response.body().getMessage()));
+                            getCallbackWithList.onFailed(new Throwable("Can't get online users! " + response.body().getMessage()));
                         }
                     }
                 }
             }
 
             @Override
-            public void onFailure(@NotNull Call<GetRequests> call, @NotNull Throwable t) {
+            public void onFailure(@NotNull Call<GetRequestsWithList> call, @NotNull Throwable t) {
                 Log.v("ERROR", t + "");
-                if (getCallback != null)
-                    getCallback.onFailed(t);
+                if (getCallbackWithList != null)
+                    getCallbackWithList.onFailed(t);
             }
         });
     }
 
-    public void doGetServer(String userKey, GetCallback getCallback) {
-        Call<GetRequests> call = restApi.getServer(userKey);
+    public void doGetServer(String userKey, GetCallbackWithList getCallbackWithList) {
+        Call<GetRequestsWithList> call = restApi.getServer(userKey);
 
-        call.enqueue(new Callback<GetRequests>() {
+        call.enqueue(new Callback<GetRequestsWithList>() {
             @Override
-            public void onResponse(@NotNull Call<GetRequests> call, @NotNull Response<GetRequests> response) {
+            public void onResponse(@NotNull Call<GetRequestsWithList> call, @NotNull Response<GetRequestsWithList> response) {
                 if (response != null) {
                     // Action
-                    if (getCallback != null) {
+                    if (getCallbackWithList != null) {
                         if (response.body().getStatus().equals(SUCCESS)) {
-                            getCallback.onSuccess(response.body().getStatus(), response.body().getData());
+                            getCallbackWithList.onSuccess(response.body().getStatus(), response.body().getData());
                         } else {
-                            getCallback.onFailed(new Throwable("Can't Logout! " + response.body().getMessage()));
+                            getCallbackWithList.onFailed(new Throwable("Can't get servers! " + response.body().getMessage()));
                         }
                     }
                 }
             }
 
             @Override
-            public void onFailure(@NotNull Call<GetRequests> call, @NotNull Throwable t) {
+            public void onFailure(@NotNull Call<GetRequestsWithList> call, @NotNull Throwable t) {
                 Log.v("ERROR", t + "");
-                if (getCallback != null)
-                    getCallback.onFailed(t);
+                if (getCallbackWithList != null)
+                    getCallbackWithList.onFailed(t);
             }
         });
     }
+
+    public void doGetServerUsers(String serverId, String userKey, GetCallbackWithObject getCallbackWithObject) {
+        Call<GetRequestsWithObject> call = restApi.getServerUsers(serverId, userKey);
+
+        call.enqueue(new Callback<GetRequestsWithObject>() {
+            @Override
+            public void onResponse(@NotNull Call<GetRequestsWithObject> call, @NotNull Response<GetRequestsWithObject> response) {
+                if (response != null) {
+                    // Action
+                    if (getCallbackWithObject != null) {
+                        if (response.body().getStatus().equals(SUCCESS)) {
+                            getCallbackWithObject.onSuccess(response.body().getStatus(), response.body().getData());
+                        } else {
+                            getCallbackWithObject.onFailed(new Throwable("Can't get server users! " + response.body().getMessage()));
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<GetRequestsWithObject> call, @NotNull Throwable t) {
+                Log.v("ERROR", t + "");
+                if (getCallbackWithObject != null)
+                    getCallbackWithObject.onFailed(t);
+            }
+        });
+    }
+
+    public void doGetCategories(String serverId, String userKey, GetCallbackWithList getCallbackWithList) {
+        Call<GetRequestsWithList> call = restApi.getCategories(serverId, userKey);
+
+        call.enqueue(new Callback<GetRequestsWithList>() {
+            @Override
+            public void onResponse(@NotNull Call<GetRequestsWithList> call, @NotNull Response<GetRequestsWithList> response) {
+                if (response != null) {
+                    // Action
+                    if (getCallbackWithList != null) {
+                        if (response.body().getStatus().equals(SUCCESS)) {
+                            getCallbackWithList.onSuccess(response.body().getStatus(), response.body().getData());
+                        } else {
+                            getCallbackWithList.onFailed(new Throwable("Can't get categories! " + response.body().getMessage()));
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<GetRequestsWithList> call, @NotNull Throwable t) {
+                Log.v("ERROR", t + "");
+                if (getCallbackWithList != null)
+                    getCallbackWithList.onFailed(t);
+            }
+        });
+    }
+
+    public void doGetChannels(String serverId, String categoryId, String userKey, GetCallbackWithList getCallbackWithList) {
+        Call<GetRequestsWithList> call = restApi.getChannels(serverId, categoryId, userKey);
+
+        call.enqueue(new Callback<GetRequestsWithList>() {
+            @Override
+            public void onResponse(@NotNull Call<GetRequestsWithList> call, @NotNull Response<GetRequestsWithList> response) {
+                if (response != null) {
+                    // Action
+                    if (getCallbackWithList != null) {
+                        if (response.body().getStatus().equals(SUCCESS)) {
+                            getCallbackWithList.onSuccess(response.body().getStatus(), response.body().getData());
+                        } else {
+                            getCallbackWithList.onFailed(new Throwable("Can't get channel! " + response.body().getMessage()));
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<GetRequestsWithList> call, @NotNull Throwable t) {
+                Log.v("ERROR", t + "");
+                if (getCallbackWithList != null)
+                    getCallbackWithList.onFailed(t);
+            }
+        });
+    }
+
+    public void doGetMessages(long timestamp, String serverId, String categoryId, String channelId, String userKey, GetCallbackWithList getCallbackWithList) {
+        Call<GetRequestsWithList> call = restApi.getMessages(serverId, categoryId, channelId, timestamp, userKey);
+
+        call.enqueue(new Callback<GetRequestsWithList>() {
+            @Override
+            public void onResponse(@NotNull Call<GetRequestsWithList> call, @NotNull Response<GetRequestsWithList> response) {
+                if (response != null) {
+                    // Action
+                    if (getCallbackWithList != null) {
+                        if (response.body().getStatus().equals(SUCCESS)) {
+                            getCallbackWithList.onSuccess(response.body().getStatus(), response.body().getData());
+                        } else {
+                            getCallbackWithList.onFailed(new Throwable("Can't get messages! " + response.body().getMessage()));
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<GetRequestsWithList> call, @NotNull Throwable t) {
+                Log.v("ERROR", t + "");
+                if (getCallbackWithList != null)
+                    getCallbackWithList.onFailed(t);
+            }
+        });
+    }
+
 
     /*
     HttpResponse<JsonNode> jsonResponse = Unirest.post("http://httpbin.org/post")
