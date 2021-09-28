@@ -1,15 +1,19 @@
-package com.accord.net.webSocket;
+package com.accord.net.webSocket.systemSockets;
 
 
 import android.os.StrictMode;
+import android.widget.Toast;
 
 import com.accord.ModelBuilder;
+import com.accord.model.User;
+import com.accord.net.webSocket.CustomWebSocketConfigurator;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -22,14 +26,15 @@ import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
 
-public class WebSocketClient extends Endpoint {
+public class SystemWebSocket extends Endpoint {
+    private ModelBuilder builder;
+
     private Session session;
     private Timer noopTimer;
     public static final String COM_NOOP = "noop";
 
-    private WSCallback callback;
-
-    public WebSocketClient(ModelBuilder modelBuilder, URI endpoint, WSCallback callback) {
+    public SystemWebSocket(ModelBuilder modelBuilder, URI endpoint) {
+        this.builder = modelBuilder;
         this.noopTimer = new Timer();
 
         try {
@@ -43,7 +48,6 @@ public class WebSocketClient extends Endpoint {
 
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             container.connectToServer(this, clientConfig, endpoint);
-            this.callback = callback;
         } catch (Exception e) {
             System.err.println("Error during establishing websocket connection:");
         }
@@ -60,7 +64,6 @@ public class WebSocketClient extends Endpoint {
             @Override
             public void run() {
                 // Send NOOP Message
-                System.out.println("##### NOOP MESSAGE #####");
                 try {
                     sendMessage(COM_NOOP);
                 } catch (IOException e) {
@@ -77,7 +80,7 @@ public class WebSocketClient extends Endpoint {
         this.noopTimer.cancel();
         // set session null
         this.session = null;
-        this.callback.onClose(session, closeReason);
+        Toast.makeText(builder.getMainActivity(), "NORMAL_CLOSURE", Toast.LENGTH_LONG).show();
     }
 
     private void onMessage(String message) {
@@ -85,7 +88,7 @@ public class WebSocketClient extends Endpoint {
             // Process Message
             JSONObject jsonObject = new JSONObject(message);
             // Use callback to handle it
-            this.callback.handleMessage(jsonObject);
+            this.handleMessage(jsonObject);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -109,5 +112,34 @@ public class WebSocketClient extends Endpoint {
 
     public Session getSession() {
         return session;
+    }
+
+    public void handleMessage(JSONObject msg) {
+        try {
+            System.out.println("msg: " + msg);
+            String userAction = msg.getString("action");
+            JSONObject jsonData = msg.getJSONObject("data");
+            String userName = jsonData.getString("name");
+            String userId = jsonData.getString("id");
+
+            if (userAction.equals("userJoined")) {
+                builder.buildUser(userName, userId);
+            }
+            if (userAction.equals("userLeft")) {
+                if (userName.equals(builder.getPersonalUser().getName())) {
+                    builder.getMainActivity().showLoginActivity();
+                }
+
+                List<User> userList = builder.getPersonalUser().getUser();
+                User removeUser = builder.buildUser(userName, userId);
+                if (userList.contains(removeUser)) {
+                    builder.getPersonalUser().withoutUser(removeUser);
+                }
+            }
+            //modelBuilder.getPersonalUser().getUser().sort(new SortUser());
+            builder.getMainActivity().updateOnlineUserRV();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

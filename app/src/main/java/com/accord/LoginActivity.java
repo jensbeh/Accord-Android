@@ -12,9 +12,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.accord.net.rest.RestClient;
 import com.accord.net.rest.RestApi;
-import com.google.gson.Gson;
+import com.accord.net.rest.RestClient;
 
 import java.util.Map;
 
@@ -30,8 +29,6 @@ public class LoginActivity extends AppCompatActivity {
     private CheckBox checkBox_rememberMe;
     private CheckBox checkbox_loginTempUser;
     private RestClient restClient;
-
-    private String userKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,17 +101,13 @@ public class LoginActivity extends AppCompatActivity {
                     System.out.print(status);
                     System.out.print(data);
 
-                    userKey = data.get("userKey");
+                    String userKey = data.get("userKey");
                     System.out.print(userKey);
 
-                    ModelBuilder modelBuilder = new ModelBuilder();
-                    modelBuilder.buildPersonalUser(username, userKey);
-
-                    Gson gson = new Gson();
-                    String modelBuilderAsAString = gson.toJson(modelBuilder);
-
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                    intent.putExtra("ModelBuilder", modelBuilderAsAString);
+                    intent.putExtra("username", username);
+                    intent.putExtra("password", password);
+                    intent.putExtra("userKey", userKey);
                     startActivity(intent);
                 }
 
