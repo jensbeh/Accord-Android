@@ -1,6 +1,7 @@
 package com.accord;
 
 import static com.accord.util.Constants.CHAT_WEBSOCKET_PATH;
+import static com.accord.util.Constants.SERVER_SYSTEM_WEBSOCKET_PATH;
 import static com.accord.util.Constants.SYSTEM_WEBSOCKET_PATH;
 import static com.accord.util.Constants.WS_SERVER_URL;
 
@@ -36,6 +37,7 @@ import com.accord.model.ServerChannel;
 import com.accord.model.User;
 import com.accord.net.rest.RestClient;
 import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
+import com.accord.net.webSocket.systemSockets.ServerSystemWebSocket;
 import com.accord.net.webSocket.systemSockets.SystemWebSocket;
 import com.accord.ui.home.HomeFragment;
 import com.accord.ui.privateChat.PrivateMessageFragment;
@@ -59,10 +61,8 @@ import java.util.Map;
 // upgraded gradle from 4.2.2 to 7.0.2
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
-    private static ModelBuilder modelBuilder;
+    private static ModelBuilder builder;
     private RestClient restClient;
-    private SystemWebSocket systemWebSocket;
-    private PrivateChatWebSocket privateChatWebSocket;
     private DrawerLayout drawer;
     private NavigationView navigationViewLeft;
     private HomeFragment homeController;
@@ -104,10 +104,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String userKey = bundle.getString("userKey");
 
         // Create ModelBuilder
-        modelBuilder = new ModelBuilder();
-        modelBuilder.buildPersonalUser(username, userKey);
-        modelBuilder.setState(State.HomeView);
-        modelBuilder.setMainActivity(this);
+        builder = new ModelBuilder();
+        builder.buildPersonalUser(username, userKey);
+        builder.setState(State.HomeView);
+        builder.setMainActivity(this);
 
         restClient = new RestClient();
         restClient.setup();
@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Setup navigation and screen when start
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    new HomeFragment(modelBuilder)).commit();
+                    new HomeFragment(builder)).commit();
             navigationViewLeft.setCheckedItem(R.id.nav_Home);
         }
 
@@ -135,15 +135,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         text_username = navigationViewLeft.findViewById(R.id.text_username);
         text_userKey = navigationViewLeft.findViewById(R.id.text_userKey);
 
-        text_username.setText(modelBuilder.getPersonalUser().getName());
-        text_userKey.setText(modelBuilder.getPersonalUser().getUserKey());
+        text_username.setText(builder.getPersonalUser().getName());
+        text_userKey.setText(builder.getPersonalUser().getUserKey());
 
-        homeController = new HomeFragment(modelBuilder);
-        privateMessageController = new PrivateMessageFragment(modelBuilder);
-        serverController = new ServerFragment(modelBuilder);
-        modelBuilder.setHomeController(homeController);
-        modelBuilder.setPrivateMessageController(privateMessageController);
-        modelBuilder.setServerController(serverController);
+        homeController = new HomeFragment(builder);
+        privateMessageController = new PrivateMessageFragment(builder);
+        serverController = new ServerFragment(builder);
+        builder.setHomeController(homeController);
+        builder.setPrivateMessageController(privateMessageController);
+        builder.setServerController(serverController);
 
         button_logout.setOnClickListener(this::onLogoutButtonClick);
         button_Home.setOnClickListener(this::onHomeButtonClick);
@@ -160,12 +160,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setupOnlineUserRecyclerView();
         setupServersRecyclerView();
 
-        // setup webSockets
+        // setup webSockets for system messages and private chats
         setupWebSockets();
 
         // Get online users & servers and view them
         loadOnlineUsers();
-        loadServer(() -> System.out.println("All server loaded!"));
+        loadServer(() -> {
+            System.out.println("All server loaded!");
+            setupServerSystemWebSocket();
+        });
+
+
 
         // add navigationBar listener
         ActionBarDrawerToggle mDrawerToggle = new ActionBarDrawerToggle(this, drawer, R.string.drawer_open, R.string.drawer_close) {
@@ -207,6 +212,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(mDrawerToggle);
     }
 
+    private void setupServerSystemWebSocket() {
+        for (Server server : builder.getPersonalUser().getServer()) {
+            ServerSystemWebSocket serverSystemWebSocket = new ServerSystemWebSocket(builder, URI.create(WS_SERVER_URL + SERVER_SYSTEM_WEBSOCKET_PATH + server.getId()));
+            builder.addServerSystemWebSocket(server.getId(), serverSystemWebSocket);
+        }
+    }
+
     public interface FullyLoadedCallback {
         void onSuccess();
     }
@@ -219,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void loadServer(FullyLoadedCallback fullyLoadedCallback) {
-        restClient.doGetServer(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+        restClient.doGetServer(builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
             @Override
             public void onSuccess(String status, List data) {
                 System.out.print(status);
@@ -229,7 +241,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     String serverName = serverMap.get("name");
                     String serverId = serverMap.get("id");
 
-                    Server server = modelBuilder.buildServer(serverName, serverId);
+                    Server server = builder.buildServer(serverName, serverId);
                     loadServerUsers(server, new ServerUserCallback() {
                         @Override
                         public void onSuccess(String status) {
@@ -253,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void loadServerUsers(Server server, ServerUserCallback serverUserCallback) {
-        restClient.doGetServerUsers(server.getId(), modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithObject() {
+        restClient.doGetServerUsers(server.getId(), builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithObject() {
 
             @Override
             public void onSuccess(String status, Object data) {
@@ -273,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         String description = members.getJSONObject(i).getString("description");
                         String name = members.getJSONObject(i).getString("name");
                         boolean online = Boolean.getBoolean(members.getJSONObject(i).getString("online"));
-                        modelBuilder.buildServerUser(server, name, id, online, description);
+                        builder.buildServerUser(server, name, id, online, description);
                     }
 
                 } catch (JSONException e) {
@@ -298,7 +310,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void loadCategories(Server server, CategoriesLoadedCallback categoriesLoadedCallback) {
-        restClient.doGetCategories(server.getId(), modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+        restClient.doGetCategories(server.getId(), builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
 
             private int loadedCategories = 0;
 
@@ -343,7 +355,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void loadChannel(Server server, Categories category, ChannelLoadedCallback channelLoadedCallback) {
-        restClient.doGetChannels(server.getId(), category.getId(), modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+        restClient.doGetChannels(server.getId(), category.getId(), builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
 
             private int loadedChannel = 0;
 
@@ -415,7 +427,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void loadMessages(Server server, Categories category, ServerChannel serverChannel, MessagesLoadedCallback messagesLoadedCallback) {
-        restClient.doGetMessages(new Date().getTime(), server.getId(), category.getId(), serverChannel.getId(), modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+        restClient.doGetMessages(new Date().getTime(), server.getId(), category.getId(), serverChannel.getId(), builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
 
             @Override
             public void onSuccess(String status, List data) {
@@ -448,11 +460,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      */
     private void setupWebSockets() {
         try {
-            systemWebSocket = new SystemWebSocket(modelBuilder, new URI(WS_SERVER_URL + SYSTEM_WEBSOCKET_PATH));
-            modelBuilder.setSystemWebSocket(systemWebSocket);
+            SystemWebSocket systemWebSocket = new SystemWebSocket(builder, new URI(WS_SERVER_URL + SYSTEM_WEBSOCKET_PATH));
+            builder.setSystemWebSocket(systemWebSocket);
 
-            privateChatWebSocket = new PrivateChatWebSocket(modelBuilder, URI.create(WS_SERVER_URL + CHAT_WEBSOCKET_PATH + modelBuilder.getPersonalUser().getName().replace(" ", "+")));
-            modelBuilder.setPrivateChatWebSocket(privateChatWebSocket);
+            PrivateChatWebSocket privateChatWebSocket = new PrivateChatWebSocket(builder, URI.create(WS_SERVER_URL + CHAT_WEBSOCKET_PATH + builder.getPersonalUser().getName().replace(" ", "+")));
+            builder.setPrivateChatWebSocket(privateChatWebSocket);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -462,14 +474,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * when click on home button the home or privateChat view fragment will be shown
      */
     private void onHomeButtonClick(View view) {
-        if (modelBuilder.getState() != State.HomeView && modelBuilder.getPersonalUser().getPrivateChat().size() == 0) {
+        if (builder.getState() != State.HomeView && builder.getPersonalUser().getPrivateChat().size() == 0) {
             Toast.makeText(this, "to Home", Toast.LENGTH_SHORT).show();
-            modelBuilder.setState(State.HomeView);
+            builder.setState(State.HomeView);
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     homeController).commit();
-        } else if (modelBuilder.getState() != State.HomeView && modelBuilder.getPersonalUser().getPrivateChat().size() > 0) {
+        } else if (builder.getState() != State.HomeView && builder.getPersonalUser().getPrivateChat().size() > 0) {
             Toast.makeText(this, "to Chats", Toast.LENGTH_SHORT).show();
-            modelBuilder.setState(State.PrivateChatView);
+            builder.setState(State.PrivateChatView);
             updatePrivateChatRV();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     privateMessageController).commit();
@@ -482,7 +494,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      */
     public void loadOnlineUsers() {
         // Get Online User
-        restClient.doGetOnlineUser(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+        restClient.doGetOnlineUser(builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
             @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onSuccess(String status, List data) {
@@ -493,7 +505,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     String userDescription = userMap.get("description");
 
                     //if (!userName.equals(modelBuilder.getPersonalUser().getName())) {
-                    modelBuilder.buildUser(userName, userId);
+                    builder.buildUser(userName, userId);
                     //}
                 }
                 updateOnlineUserRV();
@@ -512,7 +524,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void setupOnlineUserRecyclerView() {
         rv_onlineUser.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        onlineUserRecyclerViewAdapter = new OnlineUserRecyclerViewAdapter(this, modelBuilder);
+        onlineUserRecyclerViewAdapter = new OnlineUserRecyclerViewAdapter(this, builder);
 
         rv_onlineUser.setLayoutManager(layoutManager);
         rv_onlineUser.setAdapter(onlineUserRecyclerViewAdapter);
@@ -541,14 +553,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String userName = user.getName();
         //Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
 
-        Channel currentChannel = modelBuilder.getSelectedPrivateChat();
+        Channel currentChannel = builder.getSelectedPrivateChat();
         boolean chatExisting = false;
         String selectedUserName = user.getName();
         String selectUserId = user.getId();
 
-        for (Channel channel : modelBuilder.getPersonalUser().getPrivateChat()) {
+        for (Channel channel : builder.getPersonalUser().getPrivateChat()) {
             if (channel.getName().equals(selectedUserName)) {
-                modelBuilder.setSelectedPrivateChat(channel);
+                builder.setSelectedPrivateChat(channel);
                 updatePrivateChatRV();
                 privateMessageController.changePrivateChatFragment();
                 chatExisting = true;
@@ -556,19 +568,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         }
 
-        if ((modelBuilder.getState() == State.HomeView && !chatExisting)) {
-            modelBuilder.setState(State.PrivateChatView);
-            modelBuilder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
-            modelBuilder.getPersonalUser().withPrivateChat(modelBuilder.getSelectedPrivateChat());
+        if ((builder.getState() == State.HomeView && !chatExisting)) {
+            builder.setState(State.PrivateChatView);
+            builder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
+            builder.getPersonalUser().withPrivateChat(builder.getSelectedPrivateChat());
             chatExisting = true;
             updatePrivateChatRV();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     privateMessageController).commit();
         }
 
-        if (modelBuilder.getState() == State.PrivateChatView && !chatExisting) {
-            modelBuilder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
-            modelBuilder.getPersonalUser().withPrivateChat(modelBuilder.getSelectedPrivateChat());
+        if (builder.getState() == State.PrivateChatView && !chatExisting) {
+            builder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
+            builder.getPersonalUser().withPrivateChat(builder.getSelectedPrivateChat());
             chatExisting = true;
             updatePrivateChatRV();
             privateMessageController.changePrivateChatFragment();
@@ -590,7 +602,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void setupPrivateChatRecyclerView() {
         rv_privateChats.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        privateChatsRecyclerViewAdapter = new PrivateChatRecyclerViewAdapter(this, modelBuilder);
+        privateChatsRecyclerViewAdapter = new PrivateChatRecyclerViewAdapter(this, builder);
 
         rv_privateChats.setLayoutManager(layoutManager);
         rv_privateChats.setAdapter(privateChatsRecyclerViewAdapter);
@@ -615,9 +627,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String userName = selectedChannel.getName();
         Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
 
-        modelBuilder.setSelectedPrivateChat(selectedChannel);
-        if (modelBuilder.getState() == State.HomeView) {
-            modelBuilder.setState(State.PrivateChatView);
+        builder.setSelectedPrivateChat(selectedChannel);
+        if (builder.getState() == State.HomeView) {
+            builder.setState(State.PrivateChatView);
             updatePrivateChatRV();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     privateMessageController).commit();
@@ -642,7 +654,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void setupServersRecyclerView() {
         rv_server.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        serverRecyclerViewAdapter = new ServerRecyclerViewAdapter(this, modelBuilder);
+        serverRecyclerViewAdapter = new ServerRecyclerViewAdapter(this, builder);
 
         rv_server.setLayoutManager(layoutManager);
         rv_server.setAdapter(serverRecyclerViewAdapter);
@@ -667,11 +679,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         String serverName = server.getName();
         Toast.makeText(MainActivity.this, serverName, Toast.LENGTH_LONG).show();
 
-        modelBuilder.setCurrentServer(server);
+        builder.setCurrentServer(server);
         updateServerRV();
 
-        if (modelBuilder.getState() != State.ServerView) {
-            modelBuilder.setState(State.ServerView);
+        if (builder.getState() != State.ServerView) {
+            builder.setState(State.ServerView);
             updatePrivateChatRV();
             //rv_serverChannel.setVisibility(View.VISIBLE);
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
@@ -707,12 +719,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             case R.id.nav_Home:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                         homeController).commit();
-                Toast.makeText(this, modelBuilder.getPersonalUser().getName(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, builder.getPersonalUser().getName(), Toast.LENGTH_SHORT).show();
                 break;
             case R.id.nav_PrivateChat:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                         privateMessageController).commit();
-                Toast.makeText(this, modelBuilder.getPersonalUser().getUserKey(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, builder.getPersonalUser().getUserKey(), Toast.LENGTH_SHORT).show();
                 break;
             case R.id.nav_Server:
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
@@ -748,7 +760,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void onLogoutButtonClick(View view) {
         saveData();
 
-        restClient.doLogout(modelBuilder.getPersonalUser().getUserKey(), new RestClient.PostCallback() {
+        restClient.doLogout(builder.getPersonalUser().getUserKey(), new RestClient.PostCallback() {
             @Override
             public void onSuccess(String status, Map<String, String> data) {
                 System.out.print(status);
@@ -768,7 +780,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * update the private chat recyclerView and set visible or not
      */
     public void updatePrivateChatRV() {
-        if (modelBuilder.getState() != State.ServerView) {
+        if (builder.getState() != State.ServerView) {
             if (rv_privateChats.getVisibility() == View.INVISIBLE) {
                 rv_privateChats.setVisibility(View.VISIBLE);
             }
@@ -793,12 +805,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreferences.Editor editor = sharedPreferences.edit();
         Gson gson = new Gson();
         ArrayList<Channel> channelArrayList = new ArrayList<>();
-        for (Channel channel : modelBuilder.getPersonalUser().getPrivateChat()) {
+        for (Channel channel : builder.getPersonalUser().getPrivateChat()) {
             Channel newChannel = new Channel().setName(channel.getName()).setId(channel.getId()).setMessages(channel.getMessages()).setUnreadMessagesCounter(channel.getUnreadMessagesCounter());
             channelArrayList.add(newChannel);
         }
         String json = gson.toJson(channelArrayList);
-        editor.putString(modelBuilder.getPersonalUser().getName(), json);
+        editor.putString(builder.getPersonalUser().getName(), json);
         editor.apply();
     }
 
@@ -808,12 +820,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void loadData() {
         SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
         Gson gson = new Gson();
-        String json = sharedPreferences.getString(modelBuilder.getPersonalUser().getName(), null);
+        String json = sharedPreferences.getString(builder.getPersonalUser().getName(), null);
         Type type = new TypeToken<ArrayList<Channel>>() {
         }.getType();
         ArrayList<Channel> mExampleList = gson.fromJson(json, type);
         if (mExampleList != null) {
-            modelBuilder.getPersonalUser().withPrivateChat(mExampleList);
+            builder.getPersonalUser().withPrivateChat(mExampleList);
         }
     }
 

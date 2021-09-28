@@ -5,10 +5,14 @@ import com.accord.model.CurrentUser;
 import com.accord.model.Server;
 import com.accord.model.User;
 import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
+import com.accord.net.webSocket.systemSockets.ServerSystemWebSocket;
 import com.accord.net.webSocket.systemSockets.SystemWebSocket;
 import com.accord.ui.home.HomeFragment;
 import com.accord.ui.privateChat.PrivateMessageFragment;
 import com.accord.ui.server.ServerFragment;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ModelBuilder {
 
@@ -16,9 +20,10 @@ public class ModelBuilder {
     private CurrentUser personalUser;
 
     private SystemWebSocket systemWebSocket;
+    private PrivateChatWebSocket privateChatWebSocket;
+    private Map<String, ServerSystemWebSocket> serverSystemWebSocketsMap = new HashMap<>();
 
     private Channel selectedPrivateChat;
-    private PrivateChatWebSocket privateChatWebSocket;
     private MainActivity.State state;
 
     private MainActivity mainActivity;
@@ -109,9 +114,15 @@ public class ModelBuilder {
     public PrivateChatWebSocket getPrivateChatWebSocketClient() {
         return privateChatWebSocket;
     }
-
     public void setPrivateChatWebSocket(PrivateChatWebSocket privateChatWebSocket) {
         this.privateChatWebSocket = privateChatWebSocket;
+    }
+
+    public void addServerSystemWebSocket(String serverId, ServerSystemWebSocket serverSystemWebSocket) {
+        this.serverSystemWebSocketsMap.put(serverId, serverSystemWebSocket);
+    }
+    public void removeServerSystemWebSocket(String serverId) {
+        this.serverSystemWebSocketsMap.remove(serverId);
     }
 
     //////////////////////////////////
@@ -148,6 +159,8 @@ public class ModelBuilder {
     public ServerFragment getServerController() {
         return serverController;
     }
+
+
 
     /*
     private Server currentServer;
