@@ -147,10 +147,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         sharedPreferences = this.getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
 
+        // load all sharedPreferences
         loadData();
 
+        // Get online users and view them and start systemWebSocket
         showUsers();
+        // setup privateChats to view with listener
         setupPrivateChatRecyclerView();
+        // setup privateChatWebSocket with handlers
         setupPrivateChatWebSocket();
 
         restClient.doGetServer(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
@@ -182,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
+        // add navigationBar listener
         ActionBarDrawerToggle mDrawerToggle = new ActionBarDrawerToggle(this, drawer, R.string.drawer_open, R.string.drawer_close) {
             @Override
             public void onDrawerSlide(View drawerView, float slideOffset) {
@@ -221,6 +226,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(mDrawerToggle);
     }
 
+    /**
+     * when click on home button the home or privateChat view fragment will be shown
+     */
     private void onHomeButtonClick(View view) {
         if (modelBuilder.getState() != State.HomeView && modelBuilder.getPersonalUser().getPrivateChat().size() == 0) {
             Toast.makeText(this, "to Home", Toast.LENGTH_SHORT).show();
@@ -236,6 +244,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    /**
+     * setup the private chat webSocket with handler
+     */
     private void setupPrivateChatWebSocket() {
         if (modelBuilder.getPrivateChatWebSocketClient() == null) {
             privateChatWebSocketClient = new WebSocketClient(modelBuilder, URI.
@@ -330,8 +341,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    /**
+     * load and shows all online users
+     * setup the system webSocket
+     */
     public void showUsers() {
-
         // Get Online User
         restClient.doGetOnlineUser(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
             @Override
@@ -356,6 +370,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
+    /**
+     * setup the system webSocket
+     */
     private void startWebSocketConnection() {
         try {
             USER_CLIENT = new WebSocketClient(modelBuilder, new URI(WS_SERVER_URL + SYSTEM_WEBSOCKET_PATH), new WSCallback() {
@@ -406,11 +423,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
-
-
     }
 
-
+    /**
+     * shows all online users and setup handler
+     */
     private void setupOnlineUserRecyclerView() {
         rv_onlineUser.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -436,6 +453,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
+    /**
+     * short click on online user
+     */
     private void onOnlineUserClicked(User user) {
         String userName = user.getName();
         //Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
@@ -475,12 +495,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.closeDrawer(findViewById(R.id.nav_view_right));
     }
 
+    /**
+     * long click on online user
+     */
     private void onOnlineUserLongClicked(User user) {
         String userId = user.getId();
         Toast.makeText(MainActivity.this, userId, Toast.LENGTH_LONG).show();
     }
 
-
+    /**
+     * shows all private chats and setup handler
+     */
     private void setupPrivateChatRecyclerView() {
         rv_privateChats.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -502,6 +527,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
+    /**
+     * short click on private chat
+     */
     private void onPrivateChatClicked(Channel selectedChannel) {
         String userName = selectedChannel.getName();
         Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
@@ -519,11 +547,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.closeDrawer(findViewById(R.id.nav_view_left));
     }
 
+    /**
+     * long click on private chat
+     */
     private void onPrivateChatLongClicked(Channel chat) {
         String chatId = chat.getId();
         Toast.makeText(MainActivity.this, chatId, Toast.LENGTH_LONG).show();
     }
 
+    /**
+     * shows all servers and setup handler
+     */
     private void setupServersRecyclerView() {
         rv_server.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -545,6 +579,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
+    /**
+     * short click on server
+     */
     private void onServerClicked(Server server) {
         String serverName = server.getName();
         Toast.makeText(MainActivity.this, serverName, Toast.LENGTH_LONG).show();
@@ -563,16 +600,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    /**
+     * long click on server
+     */
     private void onServerLongClicked(Server server) {
         String serverId = server.getId();
         Toast.makeText(MainActivity.this, serverId, Toast.LENGTH_LONG).show();
     }
 
+    /**
+     * button handler to create a server
+     */
     private void onAddServerButtonClick(View view) {
         // TODO Server erstellen
         Toast.makeText(this, "add Server", Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * short click on private chat
+     * NOT LONGER NEEDED???
+     */
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
@@ -595,19 +642,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
+    /**
+     * handle the android back pressed button
+     */
     @Override
     public void onBackPressed() {
         if (drawer.isDrawerOpen(findViewById(R.id.nav_view_left))) {
+            // if left drawer is open
             button_logout.callOnClick();
         } else if (drawer.isDrawerOpen(findViewById(R.id.nav_view_right))) {
+            // if right drawer is open
             drawer.closeDrawer(findViewById(R.id.nav_view_right));
         } else if (!(drawer.isDrawerOpen(findViewById(R.id.nav_view_right)) && !(drawer.isDrawerOpen(findViewById(R.id.nav_view_right))))) {
+            // if no drawer is open
             drawer.openDrawer(findViewById(R.id.nav_view_left));
         } else {
             super.onBackPressed();
         }
     }
 
+    /**
+     * handle the logout button action -> logout the user
+     */
     private void onLogoutButtonClick(View view) {
         saveData();
 
@@ -630,7 +686,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
-
+    /**
+     * update the private chat recyclerView and set visible or not
+     */
     private void updatePrivateChatRecyclerView() {
         if (modelBuilder.getState() != State.ServerView) {
             if (rv_privateChats.getVisibility() == View.INVISIBLE) {
@@ -647,6 +705,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    /**
+     * update the server recyclerView
+     */
     private void updateServerRecyclerView() {
         runOnUiThread(new Runnable() {
             @Override
@@ -656,7 +717,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
-
+    /**
+     * saves the data to sharedPreferences
+     */
     private void saveData() {
         SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -671,7 +734,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         editor.apply();
     }
 
-
+    /**
+     * loads the data from sharedPreferences
+     */
     private void loadData() {
         SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
         Gson gson = new Gson();

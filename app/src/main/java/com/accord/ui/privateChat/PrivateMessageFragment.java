@@ -43,6 +43,9 @@ public class PrivateMessageFragment extends Fragment {
 
     }
 
+    /**
+     * when view was created, after this you can get the items and start on this view
+     */
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         // Setup any handles to view objects here
@@ -77,7 +80,9 @@ public class PrivateMessageFragment extends Fragment {
         updatePrivateMessagesFragment();
     }
 
-
+    /**
+     * add new message and scroll to bottom
+     */
     public void updatePrivateMessagesFragment() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -90,6 +95,9 @@ public class PrivateMessageFragment extends Fragment {
         });
     }
 
+    /**
+     * changes all messages after change the chat
+     */
     public void changePrivateChatFragment() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -105,6 +113,9 @@ public class PrivateMessageFragment extends Fragment {
         });
     }
 
+    /**
+     * button with handler to send messages to the opposite user
+     */
     private void onSendButtonClicked(View view) {
         String message = et_inputMessage.getText().toString();
         if (message.length() <= 700) {
@@ -119,6 +130,9 @@ public class PrivateMessageFragment extends Fragment {
         }
     }
 
+    /**
+     * method to clear the message field
+     */
     public void clearMessageField() {
         getActivity().runOnUiThread(new Runnable() {
             @Override

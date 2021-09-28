@@ -38,7 +38,9 @@ public class ServerFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_server, container, false);
     }
 
-
+    /**
+     * when view was created, after this you can get the items and start on this view
+     */
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         // Setup any handles to view objects here
@@ -62,12 +64,17 @@ public class ServerFragment extends Fragment {
         testAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * called when server is changed
+     */
     public void updateServerFragment() {
         tv_serverName.setText(modelBuilder.getCurrentServer().getName());
         updateTestRecyclerView();
     }
 
-
+    /**
+     * test recyclerView to show currently all online users
+     */
     private void updateTestRecyclerView() {
         rv_test.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
@@ -91,6 +98,4 @@ public class ServerFragment extends Fragment {
             }
         });
     }
-
-
 }
