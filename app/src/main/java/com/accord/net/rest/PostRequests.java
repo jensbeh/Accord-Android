@@ -1,4 +1,4 @@
-package com.accord.net;
+package com.accord.net.rest;
 
 import java.util.Map;
 

@@ -12,8 +12,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.accord.net.RestClient;
-import com.accord.net.UniKsApi;
+import com.accord.net.rest.RestClient;
+import com.accord.net.rest.RestApi;
 import com.google.gson.Gson;
 
 import java.util.Map;
@@ -25,7 +25,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText editText_password;
     private Button button_logIn;
     private Button button_signIn;
-    private UniKsApi uniKsApi;
+    private RestApi restApi;
     private TextView textView_info;
     private CheckBox checkBox_rememberMe;
     private CheckBox checkbox_loginTempUser;
@@ -70,12 +70,12 @@ public class LoginActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        uniKsApi = retrofit.create(UniKsApi.class);
+        restApi = retrofit.create(RestApi.class);
 
         //userKey = restClient.getPostRequests().getData().get("userKey").toString();
         System.out.print("XXX");
 
-        restClient.createGet(uniKsApi.getUsers(userKey));
+        restClient.createGet(restApi.getUsers(userKey));
         //onlineUser = restClient.getGetRequests().getData();
         System.out.print("XXX");*/
     }

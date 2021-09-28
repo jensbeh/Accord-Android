@@ -1,5 +1,8 @@
-package com.accord.net;
+package com.accord.net.rest;
 
+
+import static com.accord.util.Constants.REST_SERVER_URL;
+import static com.accord.util.Constants.SUCCESS;
 
 import android.util.Log;
 
@@ -14,12 +17,9 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-import static com.accord.util.Constants.REST_SERVER_URL;
-import static com.accord.util.Constants.SUCCESS;
-
 public class RestClient {
 
-    private UniKsApi uniKsApi;
+    private RestApi restApi;
 
     public void setup() {
         //Logging Retrofit
@@ -28,7 +28,7 @@ public class RestClient {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        uniKsApi = retrofit.create(UniKsApi.class);
+        restApi = retrofit.create(RestApi.class);
     }
 
     // Interface
@@ -44,7 +44,7 @@ public class RestClient {
 
     public void doLogin(String username, String password, final PostCallback postCallback) {
         PostRequests postRequests = new PostRequests(username, password);
-        Call<PostRequests> call = uniKsApi.login(postRequests);
+        Call<PostRequests> call = restApi.login(postRequests);
 
         call.enqueue(new Callback<PostRequests>() {
             @Override
@@ -71,7 +71,7 @@ public class RestClient {
     }
 
     public void doLogout(String userKey, final PostCallback postCallback) {
-        Call<PostRequests> call = uniKsApi.logout(userKey);
+        Call<PostRequests> call = restApi.logout(userKey);
 
         call.enqueue(new Callback<PostRequests>() {
             @Override
@@ -98,7 +98,7 @@ public class RestClient {
     }
 
     public void doGetOnlineUser(String userKey, final GetCallback getCallback) {
-        Call<GetRequests> call = uniKsApi.getUsers(userKey);
+        Call<GetRequests> call = restApi.getUsers(userKey);
 
         call.enqueue(new Callback<GetRequests>() {
             @Override
@@ -125,7 +125,7 @@ public class RestClient {
     }
 
     public void doGetServer(String userKey, GetCallback getCallback) {
-        Call<GetRequests> call = uniKsApi.getServer(userKey);
+        Call<GetRequests> call = restApi.getServer(userKey);
 
         call.enqueue(new Callback<GetRequests>() {
             @Override

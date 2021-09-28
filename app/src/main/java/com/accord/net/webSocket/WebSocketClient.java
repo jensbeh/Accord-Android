@@ -1,4 +1,4 @@
-package com.accord.net;
+package com.accord.net.webSocket;
 
 
 import android.os.StrictMode;

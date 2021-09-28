@@ -4,7 +4,7 @@ import com.accord.model.Channel;
 import com.accord.model.CurrentUser;
 import com.accord.model.Server;
 import com.accord.model.User;
-import com.accord.net.WebSocketClient;
+import com.accord.net.webSocket.WebSocketClient;
 
 public class ModelBuilder {
 
