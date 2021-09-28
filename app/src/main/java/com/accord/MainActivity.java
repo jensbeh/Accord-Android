@@ -1,5 +1,9 @@
 package com.accord;
 
+import static com.accord.util.Constants.CHAT_WEBSOCKET_PATH;
+import static com.accord.util.Constants.SYSTEM_WEBSOCKET_PATH;
+import static com.accord.util.Constants.WS_SERVER_URL;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -53,11 +57,7 @@ import java.util.Map;
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
 
-import static com.accord.util.Constants.CHAT_WEBSOCKET_PATH;
-import static com.accord.util.Constants.SYSTEM_WEBSOCKET_PATH;
-import static com.accord.util.Constants.WEBSOCKET_PATH;
-import static com.accord.util.Constants.WS_SERVER_URL;
-
+// upgraded gradle from 4.2.2 to 7.0.2
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private static ModelBuilder modelBuilder;
@@ -239,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void setupPrivateChatWebSocket() {
         if (modelBuilder.getPrivateChatWebSocketClient() == null) {
             privateChatWebSocketClient = new WebSocketClient(modelBuilder, URI.
-                    create(WS_SERVER_URL + WEBSOCKET_PATH + CHAT_WEBSOCKET_PATH + modelBuilder.
+                    create(WS_SERVER_URL + CHAT_WEBSOCKET_PATH + modelBuilder.
                             getPersonalUser().getName().replace(" ", "+")), new WSCallback() {
                 /**
                  * handles server response
@@ -358,7 +358,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void startWebSocketConnection() {
         try {
-            USER_CLIENT = new WebSocketClient(modelBuilder, new URI(WS_SERVER_URL + WEBSOCKET_PATH + SYSTEM_WEBSOCKET_PATH), new WSCallback() {
+            USER_CLIENT = new WebSocketClient(modelBuilder, new URI(WS_SERVER_URL + SYSTEM_WEBSOCKET_PATH), new WSCallback() {
                 @Override
                 public void handleMessage(JSONObject msg) {
                     try {
@@ -672,12 +672,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
 
-
     private void loadData() {
         SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
         Gson gson = new Gson();
         String json = sharedPreferences.getString(modelBuilder.getPersonalUser().getName(), null);
-        Type type = new TypeToken<ArrayList<Channel>>() {}.getType();
+        Type type = new TypeToken<ArrayList<Channel>>() {
+        }.getType();
         ArrayList<Channel> mExampleList = gson.fromJson(json, type);
         if (mExampleList != null) {
             modelBuilder.getPersonalUser().withPrivateChat(mExampleList);

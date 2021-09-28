@@ -7,7 +7,7 @@ public class Constants {
     public static final String SYSTEM_WEBSOCKET_PATH = "/system";
     public static final String SERVER_SYSTEM_WEBSOCKET_PATH = "/system?serverId=";
     public static final String SERVER_WEBSOCKET_PATH = "&serverId=";
-    public static final String API_PREFIX = "api/";
+//    public static final String API_PREFIX = "api/";
     public static final String USERS_PATH = "users";
     public static final String LOGIN_PATH = "users/login";
     public static final String LOGOUT_PATH = "users/logout";
@@ -24,6 +24,6 @@ public class Constants {
     public static final String COM_NOOP = "noop";
 
     // Client
-    public static final String REST_SERVER_URL = "https://ac.uniks.de/api/";
-    public static final String WS_SERVER_URL = "wss://ac.uniks.de";
+    public static final String REST_SERVER_URL = "http://192.168.188.42:8080/"; // https://ac.uniks.de/api/
+    public static final String WS_SERVER_URL = "ws://192.168.188.42:8080"; // wss://ac.uniks.de
 }
