@@ -4,18 +4,27 @@ import com.accord.model.Channel;
 import com.accord.model.CurrentUser;
 import com.accord.model.Server;
 import com.accord.model.User;
-import com.accord.net.webSocket.WebSocketClient;
+import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
+import com.accord.net.webSocket.systemSockets.SystemWebSocket;
+import com.accord.ui.home.HomeFragment;
+import com.accord.ui.privateChat.PrivateMessageFragment;
+import com.accord.ui.server.ServerFragment;
 
 public class ModelBuilder {
 
     private Server currentServer;
     private CurrentUser personalUser;
 
-    private WebSocketClient USER_CLIENT;
+    private SystemWebSocket systemWebSocket;
 
     private Channel selectedPrivateChat;
-    private WebSocketClient privateChatWebSocketClient;
+    private PrivateChatWebSocket privateChatWebSocket;
     private MainActivity.State state;
+
+    private MainActivity mainActivity;
+    private HomeFragment homeController;
+    private PrivateMessageFragment privateMessageController;
+    private ServerFragment serverController;
 
     public void buildPersonalUser(String name, String userKey) {
         personalUser = new CurrentUser().setName(name).setUserKey(userKey);
@@ -55,17 +64,6 @@ public class ModelBuilder {
         return currentServer;
     }
 
-    public void setUSER_CLIENT(WebSocketClient USER_CLIENT) {
-        this.USER_CLIENT = USER_CLIENT;
-    }
-
-    public WebSocketClient getPrivateChatWebSocketClient() {
-        return privateChatWebSocketClient;
-    }
-
-    public void setPrivateChatWebSocketClient(WebSocketClient privateChatWebSocketClient) {
-        this.privateChatWebSocketClient = privateChatWebSocketClient;
-    }
 
     public void setSelectedPrivateChat(Channel selectedPrivateChat) {
         this.selectedPrivateChat = selectedPrivateChat;
@@ -83,7 +81,52 @@ public class ModelBuilder {
         return state;
     }
 
+    //////////////////////////////////
+    // WebSockets
+    //////////////////////////////////
+    public void setSystemWebSocket(SystemWebSocket systemWebSocket) {
+        this.systemWebSocket = systemWebSocket;
+    }
 
+    public PrivateChatWebSocket getPrivateChatWebSocketClient() {
+        return privateChatWebSocket;
+    }
+
+    public void setPrivateChatWebSocket(PrivateChatWebSocket privateChatWebSocket) {
+        this.privateChatWebSocket = privateChatWebSocket;
+    }
+
+    //////////////////////////////////
+    // Activities & FragmentController
+    //////////////////////////////////
+    public void setMainActivity(MainActivity mainActivity) {
+        this.mainActivity = mainActivity;
+    }
+
+    public MainActivity getMainActivity() {
+        return mainActivity;
+    }
+
+    public void setHomeController(HomeFragment homeController) {
+        this.homeController = homeController;
+    }
+    public HomeFragment getHomeController() {
+        return homeController;
+    }
+
+    public void setPrivateMessageController(PrivateMessageFragment privateMessageController) {
+        this.privateMessageController = privateMessageController;
+    }
+    public PrivateMessageFragment getPrivateMessageController() {
+        return privateMessageController;
+    }
+
+    public void setServerController(ServerFragment serverController) {
+        this.serverController = serverController;
+    }
+    public ServerFragment getServerController() {
+        return serverController;
+    }
 
     /*
     private Server currentServer;

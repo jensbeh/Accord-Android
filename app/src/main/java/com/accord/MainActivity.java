@@ -29,12 +29,11 @@ import com.accord.adapter.OnlineUserRecyclerViewAdapter;
 import com.accord.adapter.PrivateChatRecyclerViewAdapter;
 import com.accord.adapter.ServerRecyclerViewAdapter;
 import com.accord.model.Channel;
-import com.accord.model.Message;
 import com.accord.model.Server;
 import com.accord.model.User;
 import com.accord.net.rest.RestClient;
-import com.accord.net.webSocket.WSCallback;
-import com.accord.net.webSocket.WebSocketClient;
+import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
+import com.accord.net.webSocket.systemSockets.SystemWebSocket;
 import com.accord.ui.home.HomeFragment;
 import com.accord.ui.privateChat.PrivateMessageFragment;
 import com.accord.ui.server.ServerFragment;
@@ -42,28 +41,20 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-
-import javax.websocket.CloseReason;
-import javax.websocket.Session;
 
 // upgraded gradle from 4.2.2 to 7.0.2
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private static ModelBuilder modelBuilder;
     private RestClient restClient;
-    private WebSocketClient USER_CLIENT;
-    private WebSocketClient privateChatWebSocketClient;
+    private SystemWebSocket systemWebSocket;
+    private PrivateChatWebSocket privateChatWebSocket;
     private DrawerLayout drawer;
     private NavigationView navigationViewLeft;
     private HomeFragment homeController;
@@ -88,7 +79,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private OnlineUserRecyclerViewAdapter onlineUserRecyclerViewAdapter;
     private PrivateChatRecyclerViewAdapter privateChatsRecyclerViewAdapter;
     private ServerRecyclerViewAdapter serverRecyclerViewAdapter;
-    private SimpleDateFormat timeFormatter;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private String KEY_PREFS = "privateChats";
@@ -99,11 +89,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Get ModelBuilder
-        Gson gson = new Gson();
-        String modelBuilderAsAString = getIntent().getStringExtra("ModelBuilder");
-        modelBuilder = gson.fromJson(modelBuilderAsAString, ModelBuilder.class);
+        // Get personalUser information from loginActivity
+        Bundle bundle = getIntent().getExtras();
+        String username = bundle.getString("username");
+        String password = bundle.getString("password");
+        String userKey = bundle.getString("userKey");
+
+        // Create ModelBuilder
+        modelBuilder = new ModelBuilder();
+        modelBuilder.buildPersonalUser(username, userKey);
         modelBuilder.setState(State.HomeView);
+        modelBuilder.setMainActivity(this);
 
         restClient = new RestClient();
         restClient.setup();
@@ -137,12 +133,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         homeController = new HomeFragment(modelBuilder);
         privateMessageController = new PrivateMessageFragment(modelBuilder);
         serverController = new ServerFragment(modelBuilder);
+        modelBuilder.setHomeController(homeController);
+        modelBuilder.setPrivateMessageController(privateMessageController);
+        modelBuilder.setServerController(serverController);
 
         button_logout.setOnClickListener(this::onLogoutButtonClick);
         button_Home.setOnClickListener(this::onHomeButtonClick);
         button_addServer.setOnClickListener(this::onAddServerButtonClick);
-
-        timeFormatter = new SimpleDateFormat("HH:mm");
 
         sharedPreferences = this.getSharedPreferences(KEY_PREFS, Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
@@ -150,40 +147,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // load all sharedPreferences
         loadData();
 
-        // Get online users and view them and start systemWebSocket
-        showUsers();
-        // setup privateChats to view with listener
+        // setup RecyclerViews with listener
         setupPrivateChatRecyclerView();
-        // setup privateChatWebSocket with handlers
-        setupPrivateChatWebSocket();
+        setupOnlineUserRecyclerView();
+        setupServersRecyclerView();
 
-        restClient.doGetServer(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
-            @Override
-            public void onSuccess(String status, List data) {
-                System.out.print(status);
-                System.out.print(data);
-                ArrayList<Server> onlineServers = new ArrayList<>();
-                for (int i = 0; i < data.size(); i++) {
-                    Map<String, String> serverMap = (Map<String, String>) data.get(i);
-                    String serverName = serverMap.get("name");
-                    String serverId = serverMap.get("id");
-                    System.out.print("XXX");
+        // setup webSockets
+        setupWebSockets();
 
-                    Server server = modelBuilder.buildServer(serverName, serverId);
-                    onlineServers.add(server);
-                }
-                for (Server server : modelBuilder.getPersonalUser().getServer()) {
-                    if (!onlineServers.contains(server)) {
-                        modelBuilder.getPersonalUser().withoutServer(server);
-                    }
-                }
-                setupServersRecyclerView();
-            }
-
-            @Override
-            public void onFailed(Throwable error) {
-                System.out.print("Error: " + error.getMessage());
-            }
+        // Get online users & servers and view them
+        loadOnlineUsers();
+        loadServer(() -> {
+            System.out.println("All server loaded!");
         });
 
         // add navigationBar listener
@@ -226,6 +201,50 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(mDrawerToggle);
     }
 
+    public interface FullyLoadedCallback {
+        void onSuccess();
+    }
+
+    private void loadServer(FullyLoadedCallback fullyLoadedCallback) {
+        restClient.doGetServer(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
+            @Override
+            public void onSuccess(String status, List data) {
+                System.out.print(status);
+                System.out.print(data);
+                for (int i = 0; i < data.size(); i++) {
+                    Map<String, String> serverMap = (Map<String, String>) data.get(i);
+                    String serverName = serverMap.get("name");
+                    String serverId = serverMap.get("id");
+
+                    modelBuilder.buildServer(serverName, serverId);
+                }
+                updateServerRV();
+                fullyLoadedCallback.onSuccess();
+            }
+
+            @Override
+            public void onFailed(Throwable error) {
+                System.out.print("Error: " + error.getMessage());
+            }
+        });
+    }
+
+
+    /**
+     * setup the system webSocket & privateChat webSocket
+     */
+    private void setupWebSockets() {
+        try {
+            systemWebSocket = new SystemWebSocket(modelBuilder, new URI(WS_SERVER_URL + SYSTEM_WEBSOCKET_PATH));
+            modelBuilder.setSystemWebSocket(systemWebSocket);
+
+            privateChatWebSocket = new PrivateChatWebSocket(modelBuilder, URI.create(WS_SERVER_URL + CHAT_WEBSOCKET_PATH + modelBuilder.getPersonalUser().getName().replace(" ", "+")));
+            modelBuilder.setPrivateChatWebSocket(privateChatWebSocket);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * when click on home button the home or privateChat view fragment will be shown
      */
@@ -238,106 +257,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (modelBuilder.getState() != State.HomeView && modelBuilder.getPersonalUser().getPrivateChat().size() > 0) {
             Toast.makeText(this, "to Chats", Toast.LENGTH_SHORT).show();
             modelBuilder.setState(State.PrivateChatView);
-            updatePrivateChatRecyclerView();
+            updatePrivateChatRV();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     privateMessageController).commit();
-        }
-    }
-
-    /**
-     * setup the private chat webSocket with handler
-     */
-    private void setupPrivateChatWebSocket() {
-        if (modelBuilder.getPrivateChatWebSocketClient() == null) {
-            privateChatWebSocketClient = new WebSocketClient(modelBuilder, URI.
-                    create(WS_SERVER_URL + CHAT_WEBSOCKET_PATH + modelBuilder.
-                            getPersonalUser().getName().replace(" ", "+")), new WSCallback() {
-                /**
-                 * handles server response
-                 *
-                 * @param msg is the response from the server as a JsonStructure
-                 */
-                @Override
-                public void handleMessage(JSONObject msg) {
-                    try {
-                        System.out.println("privateChatWebSocketClient");
-                        System.out.println(msg);
-
-                        if (msg.has("channel") && msg.getString("channel").equals("private")) {
-                            Message message;
-                            String channelName;
-                            Boolean newChat = true;
-
-                            Date date = new Date();
-                            String currentTime = timeFormatter.format(date);
-
-                            // currentUser send
-                            if (msg.getString("from").equals(modelBuilder.getPersonalUser().getName())) {
-                                channelName = msg.getString("to");
-                                message = new Message().setMessage(msg.getString("message")).
-                                        setFrom(msg.getString("from")).
-                                        setTimestamp(msg.getInt("timestamp")).setCurrentTime(currentTime);
-                                privateMessageController.clearMessageField();
-                            } else { // currentUser received
-                                channelName = msg.getString("from");
-                                message = new Message().setMessage(msg.getString("message")).
-                                        setFrom(msg.getString("from")).
-                                        setTimestamp(msg.getInt("timestamp")).setCurrentTime(currentTime);
-                            }
-                            for (Channel channel : modelBuilder.getPersonalUser().getPrivateChat()) {
-                                if (channel.getName().equals(channelName)) {
-                                    channel.withMessage(message);
-                                    if (modelBuilder.getSelectedPrivateChat() == null || channel != modelBuilder.getSelectedPrivateChat()) {
-                                        channel.setUnreadMessagesCounter(channel.getUnreadMessagesCounter() + 1);
-                                    }
-                                    updatePrivateChatRecyclerView();
-                                    privateMessageController.updatePrivateMessagesFragment();
-                                    newChat = false;
-                                    break;
-                                }
-                            }
-                            if (newChat) {
-                                String userId = "";
-                                for (User user : modelBuilder.getPersonalUser().getUser()) {
-                                    if (user.getName().equals(channelName)) {
-                                        userId = user.getId();
-                                    }
-                                }
-                                Channel channel = new Channel().setId(userId).setName(channelName).withMessage(message).setUnreadMessagesCounter(1);
-                                modelBuilder.getPersonalUser().withPrivateChat(channel);
-                                updatePrivateChatRecyclerView();
-                                privateMessageController.updatePrivateMessagesFragment();
-                            }
-                            if (privateMessageController != null) {
-                                //privateMessageController.printMessage(message); //PRINT MESSAGE
-                            }
-                        }
-                        if (msg.has("action") && msg.getString("action").equals("info")) {
-                            String errorTitle;
-                            String serverMessage = msg.getJSONObject("data").getString("message");
-                            if (serverMessage.equals("This is not your username.")) {
-                                System.out.print("This is not your username.");
-                                Toast.makeText(MainActivity.this, "This is not your username.", Toast.LENGTH_LONG).show();
-                            }
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-
-                @Override
-                public void onClose(Session session, CloseReason closeReason) {
-                    System.out.println(closeReason.getCloseCode().toString());
-                    if (!closeReason.getCloseCode().toString().equals("NORMAL_CLOSURE")) {
-                        System.out.print(closeReason);
-                        Toast.makeText(MainActivity.this, "NORMAL_CLOSURE", Toast.LENGTH_LONG).show();
-                    }
-                }
-            });
-            modelBuilder.setPrivateChatWebSocketClient(privateChatWebSocketClient);
-        } else {
-            privateChatWebSocketClient = modelBuilder.getPrivateChatWebSocketClient();
         }
     }
 
@@ -345,9 +267,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * load and shows all online users
      * setup the system webSocket
      */
-    public void showUsers() {
+    public void loadOnlineUsers() {
         // Get Online User
         restClient.doGetOnlineUser(modelBuilder.getPersonalUser().getUserKey(), new RestClient.GetCallback() {
+            @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onSuccess(String status, List data) {
                 for (int i = 0; i < data.size(); i++) {
@@ -359,8 +282,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     modelBuilder.buildUser(userName, userId);
                     //}
                 }
-                setupOnlineUserRecyclerView();
-                startWebSocketConnection();
+                updateOnlineUserRV();
             }
 
             @Override
@@ -368,61 +290,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 System.out.print("Error: " + error.getMessage());
             }
         });
-    }
-
-    /**
-     * setup the system webSocket
-     */
-    private void startWebSocketConnection() {
-        try {
-            USER_CLIENT = new WebSocketClient(modelBuilder, new URI(WS_SERVER_URL + SYSTEM_WEBSOCKET_PATH), new WSCallback() {
-                @Override
-                public void handleMessage(JSONObject msg) {
-                    try {
-                        System.out.println("msg: " + msg);
-                        String userAction = msg.getString("action");
-                        JSONObject jsonData = msg.getJSONObject("data");
-                        String userName = jsonData.getString("name");
-                        String userId = jsonData.getString("id");
-
-                        if (userAction.equals("userJoined")) {
-                            modelBuilder.buildUser(userName, userId);
-                        }
-                        if (userAction.equals("userLeft")) {
-                            if (userName.equals(modelBuilder.getPersonalUser().getName())) {
-                                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                                startActivity(intent);
-                                overridePendingTransition(R.anim.activity_exit_backwards, R.anim.activity_enter_backwards);
-                            }
-
-                            List<User> userList = modelBuilder.getPersonalUser().getUser();
-                            User removeUser = modelBuilder.buildUser(userName, userId);
-                            if (userList.contains(removeUser)) {
-                                modelBuilder.getPersonalUser().withoutUser(removeUser);
-                            }
-                        }
-                        //modelBuilder.getPersonalUser().getUser().sort(new SortUser());
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                onlineUserRecyclerViewAdapter.notifyDataSetChanged();
-                            }
-                        });
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                @Override
-                public void onClose(Session session, CloseReason closeReason) {
-                    System.out.print(closeReason);
-                    Toast.makeText(MainActivity.this, "NORMAL_CLOSURE", Toast.LENGTH_LONG).show();
-                }
-            });
-            modelBuilder.setUSER_CLIENT(USER_CLIENT);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -468,7 +335,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         for (Channel channel : modelBuilder.getPersonalUser().getPrivateChat()) {
             if (channel.getName().equals(selectedUserName)) {
                 modelBuilder.setSelectedPrivateChat(channel);
-                updatePrivateChatRecyclerView();
+                updatePrivateChatRV();
                 privateMessageController.changePrivateChatFragment();
                 chatExisting = true;
                 break;
@@ -480,7 +347,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             modelBuilder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
             modelBuilder.getPersonalUser().withPrivateChat(modelBuilder.getSelectedPrivateChat());
             chatExisting = true;
-            updatePrivateChatRecyclerView();
+            updatePrivateChatRV();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     privateMessageController).commit();
         }
@@ -489,7 +356,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             modelBuilder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
             modelBuilder.getPersonalUser().withPrivateChat(modelBuilder.getSelectedPrivateChat());
             chatExisting = true;
-            updatePrivateChatRecyclerView();
+            updatePrivateChatRV();
             privateMessageController.changePrivateChatFragment();
         }
         drawer.closeDrawer(findViewById(R.id.nav_view_right));
@@ -537,11 +404,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         modelBuilder.setSelectedPrivateChat(selectedChannel);
         if (modelBuilder.getState() == State.HomeView) {
             modelBuilder.setState(State.PrivateChatView);
-            updatePrivateChatRecyclerView();
+            updatePrivateChatRV();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     privateMessageController).commit();
         } else {
-            updatePrivateChatRecyclerView();
+            updatePrivateChatRV();
             privateMessageController.changePrivateChatFragment();
         }
         drawer.closeDrawer(findViewById(R.id.nav_view_left));
@@ -587,11 +454,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toast.makeText(MainActivity.this, serverName, Toast.LENGTH_LONG).show();
 
         modelBuilder.setCurrentServer(server);
-        updateServerRecyclerView();
+        updateServerRV();
 
         if (modelBuilder.getState() != State.ServerView) {
             modelBuilder.setState(State.ServerView);
-            updatePrivateChatRecyclerView();
+            updatePrivateChatRV();
             //rv_serverChannel.setVisibility(View.VISIBLE);
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     serverController).commit();
@@ -673,10 +540,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 System.out.print(status);
                 System.out.print(data);
 
-                ArrayList<Channel> list = new ArrayList<>(modelBuilder.getPersonalUser().getPrivateChat());
-                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                startActivity(intent);
-                overridePendingTransition(R.anim.activity_exit_backwards, R.anim.activity_enter_backwards);
+                showLoginActivity();
             }
 
             @Override
@@ -689,7 +553,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     /**
      * update the private chat recyclerView and set visible or not
      */
-    private void updatePrivateChatRecyclerView() {
+    public void updatePrivateChatRV() {
         if (modelBuilder.getState() != State.ServerView) {
             if (rv_privateChats.getVisibility() == View.INVISIBLE) {
                 rv_privateChats.setVisibility(View.VISIBLE);
@@ -708,7 +572,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     /**
      * update the server recyclerView
      */
-    private void updateServerRecyclerView() {
+    private void updateServerRV() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -724,7 +588,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         Gson gson = new Gson();
-        ArrayList<Channel> channelArrayList = new ArrayList<>(modelBuilder.getPersonalUser().getPrivateChat().size());
+        ArrayList<Channel> channelArrayList = new ArrayList<>();
         for (Channel channel : modelBuilder.getPersonalUser().getPrivateChat()) {
             Channel newChannel = new Channel().setName(channel.getName()).setId(channel.getId()).setMessages(channel.getMessages()).setUnreadMessagesCounter(channel.getUnreadMessagesCounter());
             channelArrayList.add(newChannel);
@@ -747,5 +611,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (mExampleList != null) {
             modelBuilder.getPersonalUser().withPrivateChat(mExampleList);
         }
+    }
+
+    public void showLoginActivity() {
+        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.activity_exit_backwards, R.anim.activity_enter_backwards);
+    }
+
+    public void updateOnlineUserRV() {
+        runOnUiThread(() -> onlineUserRecyclerViewAdapter.notifyDataSetChanged());
     }
 }
