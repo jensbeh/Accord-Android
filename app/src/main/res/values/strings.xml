@@ -29,4 +29,7 @@
     <string name="receiveMessage">receiveMessage</string>
     <string name="send">Send</string>
     <string name="enter_message">Message...</string>
+    <string name="categoryName">CategoryName</string>
+    <string name="channelName">🖊️ ChannelName</string>
+    <string name="plusSymbol">+</string>
 </resources>

@@ -15,7 +15,7 @@ public class Categories
     private String name;
     private String id;
     protected PropertyChangeSupport listeners;
-    private List<Channel> channel;
+    private List<ServerChannel> channel;
 
     public String getName()
     {
@@ -53,12 +53,12 @@ public class Categories
         return this;
     }
 
-    public List<Channel> getChannel()
+    public List<ServerChannel> getChannel()
     {
         return this.channel != null ? Collections.unmodifiableList(this.channel) : Collections.emptyList();
     }
 
-    public Categories withChannel(Channel value)
+    public Categories withChannel(ServerChannel value)
     {
         if (this.channel == null)
         {

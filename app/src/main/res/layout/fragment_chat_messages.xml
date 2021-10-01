@@ -14,7 +14,9 @@
         app:layout_constraintBottom_toTopOf="@+id/message_actionBox"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        tools:listitem="@layout/raw_message_receive"
+        tools:itemCount="5"/>
 
     <LinearLayout
         android:id="@+id/message_actionBox"

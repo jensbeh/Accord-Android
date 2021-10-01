@@ -42,6 +42,7 @@ import com.accord.ui.home.HomeFragment;
 import com.accord.ui.chatMessages.PrivateMessageFragment;
 import com.accord.ui.home.PrivateChatsFragment;
 import com.accord.ui.server.ServerFragment;
+import com.accord.ui.server.ServerItemsFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private NavigationView navigationViewLeft;
     private HomeFragment homeController;
     private PrivateChatsFragment privateChatsController;
+    private ServerItemsFragment serverItemsController;
     private PrivateMessageFragment privateMessageController;
     private ServerFragment serverController;
 
@@ -130,6 +132,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         privateChatsController = new PrivateChatsFragment(builder);
         privateMessageController = new PrivateMessageFragment(builder);
         serverController = new ServerFragment(builder);
+        serverItemsController = new ServerItemsFragment(builder);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
@@ -494,19 +497,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 builder.setState(State.HomeView);
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                         homeController).commit();
+
+                // change to private chats fragment
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_items,
+                        privateChatsController).commit();
             } else {
                 // show private chat messages
                 Toast.makeText(this, "to Chats", Toast.LENGTH_SHORT).show();
                 builder.setState(State.PrivateChatView);
-                privateChatsController.updatePrivateChatsRV();
+
+                // change to private chats fragment
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_items,
+                        privateChatsController).commit();
+
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                         privateMessageController).commit();
             }
-
-            // change to private chats fragment
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_items,
-                    privateChatsController).commit();
-            privateChatsController.updatePrivateChatsRV();
         }
     }
 
@@ -651,6 +657,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         builder.setCurrentServer(server);
         updateServerRV();
+
+        // change to server items fragment
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_items,
+                serverItemsController).commit();
 
         if (builder.getState() != State.ServerView) {
             builder.setState(State.ServerView);
