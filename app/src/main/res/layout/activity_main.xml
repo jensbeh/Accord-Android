@@ -145,23 +145,13 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_privateChats"
+
+                <androidx.fragment.app.FragmentContainerView
+                    android:id="@+id/fragment_container_items"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="3dp"
-                    android:layout_marginEnd="3dp"
-                    android:background="@drawable/rv_private_chats_rounded_corner"
-                    android:choiceMode="singleChoice"
-                    android:paddingLeft="3dp"
-                    android:paddingTop="0dp"
-                    android:paddingRight="3dp"
-                    app:layout_constraintBottom_toBottomOf="@+id/rv_server"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintVertical_bias="0.0"
-                    tools:listitem="@layout/raw_private_chat_item" />
+                    android:layout_height="match_parent">
+
+                </androidx.fragment.app.FragmentContainerView>
 
 
             </LinearLayout>

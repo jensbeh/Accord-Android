@@ -1,4 +1,4 @@
-package com.accord.ui.privateChat;
+package com.accord.ui.chatMessages;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -39,7 +39,7 @@ public class PrivateMessageFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_private_chat, container, false);
+        return inflater.inflate(R.layout.fragment_chat_messages, container, false);
 
     }
 
@@ -48,10 +48,18 @@ public class PrivateMessageFragment extends Fragment {
      */
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
+        context = view.getContext();
+
         // Setup any handles to view objects here
         rv_messages = (RecyclerView) view.findViewById(R.id.rv_messages);
         button_sendMessage = (CardView) view.findViewById(R.id.button_sendMessage);
         et_inputMessage = (EditText) view.findViewById(R.id.et_inputMessage);
+
+
+        setupPrivateMessagesFragment();
+    }
+
+    private void setupPrivateMessagesFragment() {
         rv_messages.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         messageAdapter = new MessageRecyclerViewAdapter(context, modelBuilder);
@@ -75,15 +83,12 @@ public class PrivateMessageFragment extends Fragment {
                 Toast.makeText(context, messageTime + " - " + messageFrom, Toast.LENGTH_LONG).show();
             }
         });
-        context = view.getContext();
-
-        updatePrivateMessagesFragment();
     }
 
     /**
      * add new message and scroll to bottom
      */
-    public void updatePrivateMessagesFragment() {
+    public void notifyOnMessageAdded() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -98,7 +103,7 @@ public class PrivateMessageFragment extends Fragment {
     /**
      * changes all messages after change the chat
      */
-    public void changePrivateChatFragment() {
+    public void notifyOnChatChanged() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {

@@ -27,7 +27,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.adapter.OnlineUserRecyclerViewAdapter;
-import com.accord.adapter.PrivateChatRecyclerViewAdapter;
 import com.accord.adapter.ServerRecyclerViewAdapter;
 import com.accord.model.Categories;
 import com.accord.model.Channel;
@@ -40,7 +39,8 @@ import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
 import com.accord.net.webSocket.systemSockets.ServerSystemWebSocket;
 import com.accord.net.webSocket.systemSockets.SystemWebSocket;
 import com.accord.ui.home.HomeFragment;
-import com.accord.ui.privateChat.PrivateMessageFragment;
+import com.accord.ui.chatMessages.PrivateMessageFragment;
+import com.accord.ui.home.PrivateChatsFragment;
 import com.accord.ui.server.ServerFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
@@ -66,8 +66,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawer;
     private NavigationView navigationViewLeft;
     private HomeFragment homeController;
+    private PrivateChatsFragment privateChatsController;
     private PrivateMessageFragment privateMessageController;
     private ServerFragment serverController;
+
+    public void showMessages() {
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                builder.getPrivateMessageController()).commit();
+    }
+
+    public void closeLeftDrawer() {
+        drawer.closeDrawer(findViewById(R.id.nav_view_left));
+    }
 
     public enum State {
         HomeView,
@@ -83,9 +93,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private NavigationView navigationViewRight;
     private RecyclerView rv_server;
     private RecyclerView rv_onlineUser;
-    private RecyclerView rv_privateChats;
     private OnlineUserRecyclerViewAdapter onlineUserRecyclerViewAdapter;
-    private PrivateChatRecyclerViewAdapter privateChatsRecyclerViewAdapter;
     private ServerRecyclerViewAdapter serverRecyclerViewAdapter;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
@@ -118,17 +126,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         navigationViewLeft.setNavigationItemSelectedListener(this);
 
         // Setup navigation and screen when start
+        homeController = new HomeFragment(builder);
+        privateChatsController = new PrivateChatsFragment(builder);
+        privateMessageController = new PrivateMessageFragment(builder);
+        serverController = new ServerFragment(builder);
+
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    new HomeFragment(builder)).commit();
+                    homeController).commit();
             navigationViewLeft.setCheckedItem(R.id.nav_Home);
+
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_items,
+                    privateChatsController).commit();
         }
 
         ////////////////////////////////////////////////////
 
         rv_server = navigationViewLeft.findViewById(R.id.rv_server);
         rv_onlineUser = navigationViewRight.findViewById(R.id.rv_onlineUser);
-        rv_privateChats = navigationViewLeft.findViewById(R.id.rv_privateChats);
         button_logout = navigationViewLeft.findViewById(R.id.button_logout);
         button_Home = navigationViewLeft.findViewById(R.id.button_Home);
         button_addServer = navigationViewLeft.findViewById(R.id.button_add);
@@ -138,9 +153,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         text_username.setText(builder.getPersonalUser().getName());
         text_userKey.setText(builder.getPersonalUser().getUserKey());
 
-        homeController = new HomeFragment(builder);
-        privateMessageController = new PrivateMessageFragment(builder);
-        serverController = new ServerFragment(builder);
         builder.setHomeController(homeController);
         builder.setPrivateMessageController(privateMessageController);
         builder.setServerController(serverController);
@@ -156,7 +168,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         loadData();
 
         // setup RecyclerViews with listener
-        setupPrivateChatRecyclerView();
         setupOnlineUserRecyclerView();
         setupServersRecyclerView();
 
@@ -167,10 +178,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         loadOnlineUsers();
         loadServer(() -> {
             System.out.println("All server loaded!");
+            // after loading all servers create the webSockets
             setupServerSystemWebSocket();
         });
-
-
 
         // add navigationBar listener
         ActionBarDrawerToggle mDrawerToggle = new ActionBarDrawerToggle(this, drawer, R.string.drawer_open, R.string.drawer_close) {
@@ -210,13 +220,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         };
         drawer.addDrawerListener(mDrawerToggle);
-    }
-
-    private void setupServerSystemWebSocket() {
-        for (Server server : builder.getPersonalUser().getServer()) {
-            ServerSystemWebSocket serverSystemWebSocket = new ServerSystemWebSocket(builder, URI.create(WS_SERVER_URL + SERVER_SYSTEM_WEBSOCKET_PATH + server.getId()));
-            builder.addServerSystemWebSocket(server.getId(), serverSystemWebSocket);
-        }
     }
 
     public interface FullyLoadedCallback {
@@ -463,10 +466,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             SystemWebSocket systemWebSocket = new SystemWebSocket(builder, new URI(WS_SERVER_URL + SYSTEM_WEBSOCKET_PATH));
             builder.setSystemWebSocket(systemWebSocket);
 
-            PrivateChatWebSocket privateChatWebSocket = new PrivateChatWebSocket(builder, URI.create(WS_SERVER_URL + CHAT_WEBSOCKET_PATH + builder.getPersonalUser().getName().replace(" ", "+")));
+            PrivateChatWebSocket privateChatWebSocket = new PrivateChatWebSocket(builder, privateChatsController, URI.create(WS_SERVER_URL + CHAT_WEBSOCKET_PATH + builder.getPersonalUser().getName().replace(" ", "+")));
             builder.setPrivateChatWebSocket(privateChatWebSocket);
         } catch (URISyntaxException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void setupServerSystemWebSocket() {
+        for (Server server : builder.getPersonalUser().getServer()) {
+            ServerSystemWebSocket serverSystemWebSocket = new ServerSystemWebSocket(builder, URI.create(WS_SERVER_URL + SERVER_SYSTEM_WEBSOCKET_PATH + server.getId()));
+            builder.addServerSystemWebSocket(server.getId(), serverSystemWebSocket);
         }
     }
 
@@ -474,17 +484,29 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * when click on home button the home or privateChat view fragment will be shown
      */
     private void onHomeButtonClick(View view) {
-        if (builder.getState() != State.HomeView && builder.getPersonalUser().getPrivateChat().size() == 0) {
-            Toast.makeText(this, "to Home", Toast.LENGTH_SHORT).show();
-            builder.setState(State.HomeView);
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    homeController).commit();
-        } else if (builder.getState() != State.HomeView && builder.getPersonalUser().getPrivateChat().size() > 0) {
-            Toast.makeText(this, "to Chats", Toast.LENGTH_SHORT).show();
-            builder.setState(State.PrivateChatView);
-            updatePrivateChatRV();
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    privateMessageController).commit();
+        if (builder.getState() == State.ServerView) {
+            builder.setCurrentServer(null);
+            updateServerRV();
+
+            if (builder.getSelectedPrivateChat() == null) {
+                // show home
+                Toast.makeText(this, "to Home", Toast.LENGTH_SHORT).show();
+                builder.setState(State.HomeView);
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        homeController).commit();
+            } else {
+                // show private chat messages
+                Toast.makeText(this, "to Chats", Toast.LENGTH_SHORT).show();
+                builder.setState(State.PrivateChatView);
+                privateChatsController.updatePrivateChatsRV();
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        privateMessageController).commit();
+            }
+
+            // change to private chats fragment
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_items,
+                    privateChatsController).commit();
+            privateChatsController.updatePrivateChatsRV();
         }
     }
 
@@ -561,8 +583,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         for (Channel channel : builder.getPersonalUser().getPrivateChat()) {
             if (channel.getName().equals(selectedUserName)) {
                 builder.setSelectedPrivateChat(channel);
-                updatePrivateChatRV();
-                privateMessageController.changePrivateChatFragment();
+                privateChatsController.updatePrivateChatsRV();
+                privateMessageController.notifyOnChatChanged();
                 chatExisting = true;
                 break;
             }
@@ -573,7 +595,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             builder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
             builder.getPersonalUser().withPrivateChat(builder.getSelectedPrivateChat());
             chatExisting = true;
-            updatePrivateChatRV();
+            privateChatsController.updatePrivateChatsRV();
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     privateMessageController).commit();
         }
@@ -582,8 +604,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             builder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
             builder.getPersonalUser().withPrivateChat(builder.getSelectedPrivateChat());
             chatExisting = true;
-            updatePrivateChatRV();
-            privateMessageController.changePrivateChatFragment();
+            privateChatsController.updatePrivateChatsRV();
+            privateMessageController.notifyOnChatChanged();
         }
         drawer.closeDrawer(findViewById(R.id.nav_view_right));
     }
@@ -594,58 +616,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void onOnlineUserLongClicked(User user) {
         String userId = user.getId();
         Toast.makeText(MainActivity.this, userId, Toast.LENGTH_LONG).show();
-    }
-
-    /**
-     * shows all private chats and setup handler
-     */
-    private void setupPrivateChatRecyclerView() {
-        rv_privateChats.setHasFixedSize(true);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        privateChatsRecyclerViewAdapter = new PrivateChatRecyclerViewAdapter(this, builder);
-
-        rv_privateChats.setLayoutManager(layoutManager);
-        rv_privateChats.setAdapter(privateChatsRecyclerViewAdapter);
-
-        privateChatsRecyclerViewAdapter.setOnItemClickListener(new PrivateChatRecyclerViewAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, Channel channel) {
-                onPrivateChatClicked(channel);
-            }
-
-            @Override
-            public void onItemLongClick(View view, Channel channel) {
-                onPrivateChatLongClicked(channel);
-            }
-        });
-    }
-
-    /**
-     * short click on private chat
-     */
-    private void onPrivateChatClicked(Channel selectedChannel) {
-        String userName = selectedChannel.getName();
-        Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
-
-        builder.setSelectedPrivateChat(selectedChannel);
-        if (builder.getState() == State.HomeView) {
-            builder.setState(State.PrivateChatView);
-            updatePrivateChatRV();
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    privateMessageController).commit();
-        } else {
-            updatePrivateChatRV();
-            privateMessageController.changePrivateChatFragment();
-        }
-        drawer.closeDrawer(findViewById(R.id.nav_view_left));
-    }
-
-    /**
-     * long click on private chat
-     */
-    private void onPrivateChatLongClicked(Channel chat) {
-        String chatId = chat.getId();
-        Toast.makeText(MainActivity.this, chatId, Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -684,7 +654,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (builder.getState() != State.ServerView) {
             builder.setState(State.ServerView);
-            updatePrivateChatRV();
+            privateChatsController.updatePrivateChatsRV();
             //rv_serverChannel.setVisibility(View.VISIBLE);
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     serverController).commit();
@@ -774,20 +744,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 System.out.print("Error: " + error.getMessage());
             }
         });
-    }
-
-    /**
-     * update the private chat recyclerView and set visible or not
-     */
-    public void updatePrivateChatRV() {
-        if (builder.getState() != State.ServerView) {
-            if (rv_privateChats.getVisibility() == View.INVISIBLE) {
-                rv_privateChats.setVisibility(View.VISIBLE);
-            }
-            runOnUiThread(() -> privateChatsRecyclerViewAdapter.notifyDataSetChanged());
-        } else {
-            rv_privateChats.setVisibility(View.INVISIBLE);
-        }
     }
 
     /**

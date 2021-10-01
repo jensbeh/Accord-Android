@@ -8,7 +8,7 @@ import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
 import com.accord.net.webSocket.systemSockets.ServerSystemWebSocket;
 import com.accord.net.webSocket.systemSockets.SystemWebSocket;
 import com.accord.ui.home.HomeFragment;
-import com.accord.ui.privateChat.PrivateMessageFragment;
+import com.accord.ui.chatMessages.PrivateMessageFragment;
 import com.accord.ui.server.ServerFragment;
 
 import java.util.HashMap;

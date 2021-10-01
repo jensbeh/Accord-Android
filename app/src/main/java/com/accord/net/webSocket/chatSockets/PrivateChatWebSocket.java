@@ -10,6 +10,7 @@ import com.accord.model.Channel;
 import com.accord.model.Message;
 import com.accord.model.User;
 import com.accord.net.webSocket.CustomWebSocketConfigurator;
+import com.accord.ui.home.PrivateChatsFragment;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,6 +32,7 @@ import javax.websocket.WebSocketContainer;
 
 
 public class PrivateChatWebSocket extends Endpoint {
+    private final PrivateChatsFragment privateChatsController;
     private ModelBuilder builder;
     private SimpleDateFormat timeFormatter;
 
@@ -39,8 +41,9 @@ public class PrivateChatWebSocket extends Endpoint {
     public static final String COM_NOOP = "noop";
 
     @SuppressLint("SimpleDateFormat")
-    public PrivateChatWebSocket(ModelBuilder modelBuilder, URI endpoint) {
+    public PrivateChatWebSocket(ModelBuilder modelBuilder, PrivateChatsFragment privateChatsController, URI endpoint) {
         this.builder = modelBuilder;
+        this.privateChatsController = privateChatsController;
         this.noopTimer = new Timer();
         timeFormatter = new SimpleDateFormat("HH:mm");
 
@@ -153,8 +156,8 @@ public class PrivateChatWebSocket extends Endpoint {
                         if (builder.getSelectedPrivateChat() == null || channel != builder.getSelectedPrivateChat()) {
                             channel.setUnreadMessagesCounter(channel.getUnreadMessagesCounter() + 1);
                         }
-                        builder.getMainActivity().updatePrivateChatRV();
-                        builder.getPrivateMessageController().updatePrivateMessagesFragment();
+                        privateChatsController.updatePrivateChatsRV();
+                        builder.getPrivateMessageController().notifyOnMessageAdded();
                         newChat = false;
                         break;
                     }
@@ -168,8 +171,8 @@ public class PrivateChatWebSocket extends Endpoint {
                     }
                     Channel channel = new Channel().setId(userId).setName(channelName).withMessage(message).setUnreadMessagesCounter(1);
                     builder.getPersonalUser().withPrivateChat(channel);
-                    builder.getMainActivity().updatePrivateChatRV();
-                    builder.getPrivateMessageController().updatePrivateMessagesFragment();
+                    privateChatsController.updatePrivateChatsRV();
+                    builder.getPrivateMessageController().notifyOnMessageAdded();
                 }
                 if (builder.getPrivateMessageController() != null) {
                     //privateMessageController.printMessage(message); //PRINT MESSAGE
