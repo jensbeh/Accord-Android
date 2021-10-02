@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.adapter.OnlineUserRecyclerViewAdapter;
 import com.accord.adapter.ServerRecyclerViewAdapter;
+import com.accord.bottomSheets.BottomSheetCreateServer;
 import com.accord.model.Categories;
 import com.accord.model.Channel;
 import com.accord.model.Message;
@@ -38,8 +39,8 @@ import com.accord.net.rest.RestClient;
 import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
 import com.accord.net.webSocket.systemSockets.ServerSystemWebSocket;
 import com.accord.net.webSocket.systemSockets.SystemWebSocket;
-import com.accord.ui.home.HomeFragment;
 import com.accord.ui.chatMessages.PrivateMessageFragment;
+import com.accord.ui.home.HomeFragment;
 import com.accord.ui.home.PrivateChatsFragment;
 import com.accord.ui.server.ServerFragment;
 import com.accord.ui.server.ServerItemsFragment;
@@ -686,7 +687,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      */
     private void onAddServerButtonClick(View view) {
         // TODO Server erstellen
-        Toast.makeText(this, "add Server", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "add a new server", Toast.LENGTH_SHORT).show();
+
+        // create bottomSheet for create server with all actions
+        BottomSheetCreateServer bottomSheetCreateServer = new BottomSheetCreateServer(this, R.style.BottomSheetDialogTheme, builder, builder.getCurrentServer());
+        bottomSheetCreateServer.show();
     }
 
     /**

@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.ModelBuilder;
 import com.accord.R;
+import com.accord.bottomSheets.BottomSheetCreateChannel;
 import com.accord.model.Categories;
 
 import org.jetbrains.annotations.NotNull;
@@ -68,10 +69,10 @@ public class ServerCategoriesRecyclerViewAdapter extends RecyclerView.Adapter<Se
         // contents of the view with that element
         Categories category = builder.getCurrentServer().getCategories().get(position);
         viewHolder.categoryName.setText(category.getName());
-        viewHolder.createChannel.setOnClickListener(v -> Toast.makeText(context, "create channel in " + category.getName(), Toast.LENGTH_SHORT).show());
+        viewHolder.createChannel.setOnClickListener(v -> onChannelCreatedClicked(category));
 
         // listener for category name clicked
-        viewHolder.ll_clickArea_category.setOnClickListener(v -> onCategoryClicked(category));
+        viewHolder.ll_clickArea_category.setOnClickListener(v -> onCategoryClicked(category, viewHolder));
         viewHolder.ll_clickArea_category.setOnLongClickListener(v -> {
             onCategoryLongClicked(category);
             return true;
@@ -96,11 +97,21 @@ public class ServerCategoriesRecyclerViewAdapter extends RecyclerView.Adapter<Se
         return builder.getCurrentServer().getCategories().get(position);
     }
 
+    private void onChannelCreatedClicked(Categories category) {
+        Toast.makeText(context, "create channel in " + category.getName(), Toast.LENGTH_SHORT).show();
+
+        // create bottomSheet for create channel with all actions
+        BottomSheetCreateChannel bottomSheetCreateChannel = new BottomSheetCreateChannel(context, R.style.BottomSheetDialogTheme, builder, category);
+        bottomSheetCreateChannel.show();
+    }
+
     /**
      * short click on category name
      */
-    private void onCategoryClicked(Categories selectedCategory) {
+    private void onCategoryClicked(Categories selectedCategory, ViewHolder viewHolder) {
         Toast.makeText(context, selectedCategory.getName(), Toast.LENGTH_LONG).show();
+
+        viewHolder.rv_channel.setVisibility(viewHolder.rv_channel.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
     }
 
     /**

@@ -19,6 +19,7 @@ import com.accord.MainActivity;
 import com.accord.ModelBuilder;
 import com.accord.R;
 import com.accord.adapter.ServerCategoriesRecyclerViewAdapter;
+import com.accord.bottomSheets.BottomSheetServerSetting;
 
 public class ServerItemsFragment extends Fragment {
     private ModelBuilder builder;
@@ -86,5 +87,9 @@ public class ServerItemsFragment extends Fragment {
 
     private void onServerSettingsClicked(View view) {
         Toast.makeText(builder.getMainActivity(), builder.getCurrentServer().getName() + " server settings", Toast.LENGTH_LONG).show();
+
+        // create bottomSheet for server settings with all actions
+        BottomSheetServerSetting bottomSheetServerSetting = new BottomSheetServerSetting(context, R.style.BottomSheetDialogTheme, builder, builder.getCurrentServer());
+        bottomSheetServerSetting.show();
     }
 }
