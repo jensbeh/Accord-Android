@@ -1,4 +1,4 @@
-package com.accord.adapter;
+package com.accord.adapter.mainContainer;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -14,7 +14,7 @@ import com.accord.model.Message;
 
 import org.jetbrains.annotations.NotNull;
 
-public class MessageRecyclerViewAdapter extends RecyclerView.Adapter<MessageRecyclerViewAdapter.ViewHolder> {
+public class PrivateMessageRecyclerViewAdapter extends RecyclerView.Adapter<PrivateMessageRecyclerViewAdapter.ViewHolder> {
     private Context context;
     private OnItemClickListener onItemClickListener;
     private ModelBuilder modelBuilder;
@@ -65,7 +65,7 @@ public class MessageRecyclerViewAdapter extends RecyclerView.Adapter<MessageRecy
     /**
      * Initialize the data which the Adapter need.
      */
-    public MessageRecyclerViewAdapter(Context context, ModelBuilder modelBuilder) {
+    public PrivateMessageRecyclerViewAdapter(Context context, ModelBuilder modelBuilder) {
         this.context = context;
         this.modelBuilder = modelBuilder;
     }
@@ -78,10 +78,10 @@ public class MessageRecyclerViewAdapter extends RecyclerView.Adapter<MessageRecy
         View view;
 
         if (viewType == VIEW_TYPE_MESSAGE_SENT) {
-            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.raw_message_send, viewGroup, false);
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.raw_private_message_send, viewGroup, false);
             return new SentMessageHolder(view);
         } else if (viewType == VIEW_TYPE_MESSAGE_RECEIVED) {
-            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.raw_message_receive, viewGroup, false);
+            view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.raw_private_message_receive, viewGroup, false);
             return new ReceivedMessageHolder(view);
         }
 
@@ -135,8 +135,8 @@ public class MessageRecyclerViewAdapter extends RecyclerView.Adapter<MessageRecy
 
         ReceivedMessageHolder(View view) {
             super(view);
-            messageText = (TextView) view.findViewById(R.id.tv_message_receive);
-            timestamp = (TextView) view.findViewById(R.id.tv_timestamp_receive);
+            messageText = (TextView) view.findViewById(R.id.tv_private_message_receive);
+            timestamp = (TextView) view.findViewById(R.id.tv_private_timestamp_receive);
         }
 
         void bind(Message message) {
@@ -153,7 +153,7 @@ public class MessageRecyclerViewAdapter extends RecyclerView.Adapter<MessageRecy
             super(view);
 
             messageText = (TextView) view.findViewById(R.id.tv_message_send);
-            timestamp = (TextView) view.findViewById(R.id.tv_timestamp_send);
+            timestamp = (TextView) view.findViewById(R.id.tv_private_timestamp_send);
         }
 
         void bind(Message message) {

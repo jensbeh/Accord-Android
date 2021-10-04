@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.accord.MainActivity;
 import com.accord.ModelBuilder;
 import com.accord.R;
-import com.accord.adapter.PrivateChatRecyclerViewAdapter;
+import com.accord.adapter.leftDrawer.itemContainer.PrivateChatRecyclerViewAdapter;
 import com.accord.model.Channel;
 
 public class PrivateChatsFragment extends Fragment {
@@ -77,15 +77,17 @@ public class PrivateChatsFragment extends Fragment {
      * short click on private chat
      */
     private void onPrivateChatClicked(Channel selectedChannel) {
-        String userName = selectedChannel.getName();
-        Toast.makeText(context, userName, Toast.LENGTH_LONG).show();
+        // reset notification counter
+        if (selectedChannel.getUnreadMessagesCounter() > 0) {
+            selectedChannel.setUnreadMessagesCounter(0);
+        }
 
         builder.setSelectedPrivateChat(selectedChannel);
         if (builder.getState() == MainActivity.State.HomeView) {
             // if no chat is opened
             builder.setState(MainActivity.State.PrivateChatView);
             updatePrivateChatsRV();
-            builder.getMainActivity().showMessages();
+            builder.getMainActivity().showPrivateMessages();
         } else {
             // if a chat is opened, then change
             updatePrivateChatsRV();
@@ -103,16 +105,20 @@ public class PrivateChatsFragment extends Fragment {
     }
 
     /**
-     * update the private chat recyclerView and set visible or not
+     * update the private chat recyclerView
      */
     public void updatePrivateChatsRV() {
-        if (builder.getState() != MainActivity.State.ServerView) {
-            if (rv_privateChats.getVisibility() == View.INVISIBLE) {
-                rv_privateChats.setVisibility(View.VISIBLE);
+        getActivity().runOnUiThread(() -> privateChatsRecyclerViewAdapter.notifyDataSetChanged());
+    }
+
+    /**
+     * update the private chat recyclerView
+     */
+    public void updateSinglePrivateChatInRV(Channel channel) {
+        getActivity().runOnUiThread(() -> {
+            if (builder.getPersonalUser().getPrivateChat().contains(channel)) {
+                privateChatsRecyclerViewAdapter.notifyItemChanged(builder.getPersonalUser().getPrivateChat().indexOf(channel));
             }
-            getActivity().runOnUiThread(() -> privateChatsRecyclerViewAdapter.notifyDataSetChanged());
-        } else {
-            rv_privateChats.setVisibility(View.INVISIBLE);
-        }
+        });
     }
 }

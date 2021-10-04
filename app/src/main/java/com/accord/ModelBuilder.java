@@ -1,20 +1,31 @@
 package com.accord;
 
+import com.accord.adapter.leftDrawer.itemContainer.ServerCategoriesRecyclerViewAdapter;
+import com.accord.adapter.leftDrawer.itemContainer.ServerChannelsRecyclerViewAdapter;
 import com.accord.model.Channel;
 import com.accord.model.CurrentUser;
 import com.accord.model.Server;
 import com.accord.model.User;
+import com.accord.net.rest.RestClient;
 import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
+import com.accord.net.webSocket.chatSockets.ServerChatWebSocket;
 import com.accord.net.webSocket.systemSockets.ServerSystemWebSocket;
 import com.accord.net.webSocket.systemSockets.SystemWebSocket;
+import com.accord.ui.chatMessages.PrivateMessagesFragment;
+import com.accord.ui.chatMessages.ServerMessagesFragment;
 import com.accord.ui.home.HomeFragment;
-import com.accord.ui.chatMessages.PrivateMessageFragment;
+import com.accord.ui.home.OnlineUsersFragment;
+import com.accord.ui.home.PrivateChatsFragment;
 import com.accord.ui.server.ServerFragment;
+import com.accord.ui.server.ServerMembersFragment;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class ModelBuilder {
+    private Map<String, ServerChannelsRecyclerViewAdapter> channelAdapterMap = new HashMap<>();
+    private ServerCategoriesRecyclerViewAdapter serverCategoriesAdapter;
+    private RestClient restClient;
 
     private Server currentServer;
     private CurrentUser personalUser;
@@ -28,24 +39,29 @@ public class ModelBuilder {
 
     private MainActivity mainActivity;
     private HomeFragment homeController;
-    private PrivateMessageFragment privateMessageController;
+    private PrivateMessagesFragment privateMessageController;
     private ServerFragment serverController;
+    private ServerMessagesFragment serverMessageController;
+    private Map<String, ServerChatWebSocket> serverChatWebSocketsMap = new HashMap<>();
+    private PrivateChatsFragment privateChatsController;
+    private OnlineUsersFragment onlineUserController;
+    private ServerMembersFragment serverMembersController;
 
-    public void buildPersonalUser(String name, String userKey) {
-        personalUser = new CurrentUser().setName(name).setUserKey(userKey);
+    public void buildPersonalUser(String name, String password, String userKey) {
+        personalUser = new CurrentUser().setName(name).setUserKey(userKey).setPassword(password);
     }
 
     public CurrentUser getPersonalUser() {
         return personalUser;
     }
 
-    public User buildUser(String name, String id) {
+    public User buildUser(String name, String id, String description) {
         for (User user : personalUser.getUser()) {
             if (user.getId().equals(id)) {
                 return user;
             }
         }
-        User newUser = new User().setName(name).setId(id).setStatus(true);
+        User newUser = new User().setName(name).setId(id).setStatus(true).setDescription(description).setUserVolume(100.0);
         personalUser.withUser(newUser);
         return newUser;
     }
@@ -104,6 +120,14 @@ public class ModelBuilder {
         return state;
     }
 
+    public Map<String, ServerChannelsRecyclerViewAdapter> getChannelAdapterMap() {
+        return channelAdapterMap;
+    }
+
+    public void setChannelAdapterMap(Map<String, ServerChannelsRecyclerViewAdapter> channelAdapterMap) {
+        this.channelAdapterMap = channelAdapterMap;
+    }
+
     //////////////////////////////////
     // WebSockets
     //////////////////////////////////
@@ -121,8 +145,25 @@ public class ModelBuilder {
     public void addServerSystemWebSocket(String serverId, ServerSystemWebSocket serverSystemWebSocket) {
         this.serverSystemWebSocketsMap.put(serverId, serverSystemWebSocket);
     }
+
+    public Map<String, ServerSystemWebSocket> getServerSystemWebSocketsMap() {
+        return serverSystemWebSocketsMap;
+    }
+
     public void removeServerSystemWebSocket(String serverId) {
         this.serverSystemWebSocketsMap.remove(serverId);
+    }
+
+    public void addServerChatWebSocket(String serverId, ServerChatWebSocket serverChatWebSocket) {
+        this.serverChatWebSocketsMap.put(serverId, serverChatWebSocket);
+    }
+
+    public Map<String, ServerChatWebSocket> getServerChatWebSocketsMap() {
+        return serverChatWebSocketsMap;
+    }
+
+    public void removeServerChatWebSocket(String serverId) {
+        this.serverChatWebSocketsMap.remove(serverId);
     }
 
     //////////////////////////////////
@@ -144,11 +185,19 @@ public class ModelBuilder {
         return homeController;
     }
 
-    public void setPrivateMessageController(PrivateMessageFragment privateMessageController) {
+    public void setOnlineUserController(OnlineUsersFragment onlineUserController) {
+        this.onlineUserController = onlineUserController;
+    }
+
+    public OnlineUsersFragment getOnlineUserController() {
+        return onlineUserController;
+    }
+
+    public void setPrivateMessageController(PrivateMessagesFragment privateMessageController) {
         this.privateMessageController = privateMessageController;
     }
 
-    public PrivateMessageFragment getPrivateMessageController() {
+    public PrivateMessagesFragment getPrivateMessageController() {
         return privateMessageController;
     }
 
@@ -160,7 +209,45 @@ public class ModelBuilder {
         return serverController;
     }
 
+    public void setRestClient(RestClient restClient) {
+        this.restClient = restClient;
+    }
 
+    public RestClient getRestClient() {
+        return restClient;
+    }
+
+    public void setServerCategoriesAdapter(ServerCategoriesRecyclerViewAdapter serverCategoriesAdapter) {
+        this.serverCategoriesAdapter = serverCategoriesAdapter;
+    }
+
+    public ServerCategoriesRecyclerViewAdapter getServerCategoriesAdapter() {
+        return serverCategoriesAdapter;
+    }
+
+    public void setServerMessageController(ServerMessagesFragment serverMessageController) {
+        this.serverMessageController = serverMessageController;
+    }
+
+    public ServerMessagesFragment getServerMessageController() {
+        return serverMessageController;
+    }
+
+    public void setPrivateChatsController(PrivateChatsFragment privateChatsController) {
+        this.privateChatsController = privateChatsController;
+    }
+
+    public PrivateChatsFragment getPrivateChatsController() {
+        return privateChatsController;
+    }
+
+    public void setServerMembersController(ServerMembersFragment serverMembersController) {
+        this.serverMembersController = serverMembersController;
+    }
+
+    public ServerMembersFragment getServerMembersController() {
+        return serverMembersController;
+    }
 
     /*
     private Server currentServer;

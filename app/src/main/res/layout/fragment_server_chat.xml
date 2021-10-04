@@ -8,18 +8,18 @@
     android:orientation="vertical">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_messages"
+        android:id="@+id/rv_server_messages"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/message_actionBox"
+        app:layout_constraintBottom_toTopOf="@+id/server_message_actionBox"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:listitem="@layout/raw_message_receive"
+        tools:listitem="@layout/raw_private_message_receive"
         tools:itemCount="5"/>
 
     <LinearLayout
-        android:id="@+id/message_actionBox"
+        android:id="@+id/server_message_actionBox"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -47,12 +47,12 @@
                 app:cardPreventCornerOverlap="false"
                 app:cardUseCompatPadding="true"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/button_sendMessage"
+                app:layout_constraintEnd_toStartOf="@+id/button_server_sendMessage"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <EditText
-                    android:id="@+id/et_inputMessage"
+                    android:id="@+id/et_server_inputMessage"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
@@ -62,7 +62,7 @@
                     android:layout_marginBottom="10dp"
                     android:background="@android:color/transparent"
                     android:hint="@string/enter_message"
-                    android:inputType="textMultiLine"
+                    android:inputType="textMultiLine|textCapSentences"
                     android:lines="8"
                     android:maxLines="10"
                     android:minLines="1"
@@ -70,14 +70,14 @@
                     android:textColor="@color/white"
                     android:textColorHint="@color/light_grey"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/button_sendMessage"
+                    app:layout_constraintEnd_toStartOf="@+id/button_server_sendMessage"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
             </androidx.cardview.widget.CardView>
 
             <androidx.cardview.widget.CardView
-                android:id="@+id/button_sendMessage"
+                android:id="@+id/button_server_sendMessage"
                 android:layout_width="45dp"
                 android:layout_height="45dp"
                 android:layout_marginTop="7dp"

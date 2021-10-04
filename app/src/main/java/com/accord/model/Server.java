@@ -20,6 +20,7 @@ public class Server
     private List<Categories> categories;
     private List<User> user;
     protected PropertyChangeSupport listeners;
+    private ServerChannel currentServerChannel;
 
     public String getName()
     {
@@ -201,6 +202,14 @@ public class Server
             this.withoutUser(item);
         }
         return this;
+    }
+
+    public ServerChannel getCurrentServerChannel() {
+        return currentServerChannel;
+    }
+
+    public void setCurrentServerChannel(ServerChannel currentServerChannel) {
+        this.currentServerChannel = currentServerChannel;
     }
 
     public boolean firePropertyChange(String propertyName, Object oldValue, Object newValue)

@@ -25,7 +25,7 @@
 
     <!-- RecyclerView PrivateChats Item -->
     <color name="privateChatClicked">@color/light_grey</color>
-    <color name="privateChat">#3A3A3A</color>
+    <color name="privateChatNormal">#3A3A3A</color>
 
     <!-- RecyclerView Server & Add Item -->
     <color name="addServerButton">#3A3A3A</color>

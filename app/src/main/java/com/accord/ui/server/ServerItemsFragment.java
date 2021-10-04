@@ -15,10 +15,9 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.accord.MainActivity;
 import com.accord.ModelBuilder;
 import com.accord.R;
-import com.accord.adapter.ServerCategoriesRecyclerViewAdapter;
+import com.accord.adapter.leftDrawer.itemContainer.ServerCategoriesRecyclerViewAdapter;
 import com.accord.bottomSheets.BottomSheetServerSetting;
 
 public class ServerItemsFragment extends Fragment {
@@ -69,20 +68,21 @@ public class ServerItemsFragment extends Fragment {
 
         rv_categories.setLayoutManager(layoutManager);
         rv_categories.setAdapter(serverCategoriesRecyclerViewAdapter);
+
+        builder.setServerCategoriesAdapter(serverCategoriesRecyclerViewAdapter);
+    }
+
+    public void updateServerItemsFragment() {
+        tv_serverName.setText(builder.getCurrentServer().getName());
+        updateServerItemsRV();
     }
 
     /**
      * update the private chat recyclerView and set visible or not
      */
     public void updateServerItemsRV() {
-        if (builder.getState() != MainActivity.State.ServerView) {
-            if (rv_categories.getVisibility() == View.INVISIBLE) {
-                rv_categories.setVisibility(View.VISIBLE);
-            }
-            getActivity().runOnUiThread(() -> serverCategoriesRecyclerViewAdapter.notifyDataSetChanged());
-        } else {
-            rv_categories.setVisibility(View.INVISIBLE);
-        }
+        getActivity().runOnUiThread(() -> setupServerItemsRecyclerView());
+
     }
 
     private void onServerSettingsClicked(View view) {

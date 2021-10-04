@@ -123,7 +123,7 @@ public class SystemWebSocket extends Endpoint {
             String userId = jsonData.getString("id");
 
             if (userAction.equals("userJoined")) {
-                builder.buildUser(userName, userId);
+                builder.buildUser(userName, userId, "");
             }
             if (userAction.equals("userLeft")) {
                 if (userName.equals(builder.getPersonalUser().getName())) {
@@ -131,13 +131,13 @@ public class SystemWebSocket extends Endpoint {
                 }
 
                 List<User> userList = builder.getPersonalUser().getUser();
-                User removeUser = builder.buildUser(userName, userId);
+                User removeUser = builder.buildUser(userName, userId, "");
                 if (userList.contains(removeUser)) {
                     builder.getPersonalUser().withoutUser(removeUser);
                 }
             }
             //modelBuilder.getPersonalUser().getUser().sort(new SortUser());
-            builder.getMainActivity().updateOnlineUserRV();
+            builder.getOnlineUserController().updateOnlineUsersRV();
         } catch (JSONException e) {
             e.printStackTrace();
         }

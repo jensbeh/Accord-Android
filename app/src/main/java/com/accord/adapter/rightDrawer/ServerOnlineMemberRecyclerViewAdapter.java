@@ -1,4 +1,4 @@
-package com.accord.adapter;
+package com.accord.adapter.rightDrawer;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -15,10 +15,13 @@ import com.accord.model.User;
 
 import org.jetbrains.annotations.NotNull;
 
-public class OnlineUserRecyclerViewAdapter extends RecyclerView.Adapter<OnlineUserRecyclerViewAdapter.ViewHolder> {
+import java.util.ArrayList;
+
+public class ServerOnlineMemberRecyclerViewAdapter extends RecyclerView.Adapter<ServerOnlineMemberRecyclerViewAdapter.ViewHolder> {
     private Context context;
     private OnItemClickListener onItemClickListener;
     private ModelBuilder modelBuilder;
+    private ArrayList<User> onlineUserList;
 
     public interface OnItemClickListener {
         void onItemClick(View view, User user);
@@ -68,7 +71,7 @@ public class OnlineUserRecyclerViewAdapter extends RecyclerView.Adapter<OnlineUs
     /**
      * Initialize the data which the Adapter need.
      */
-    public OnlineUserRecyclerViewAdapter(Context context, ModelBuilder modelBuilder) {
+    public ServerOnlineMemberRecyclerViewAdapter(Context context, ModelBuilder modelBuilder) {
         this.context = context;
         this.modelBuilder = modelBuilder;
     }
@@ -87,17 +90,41 @@ public class OnlineUserRecyclerViewAdapter extends RecyclerView.Adapter<OnlineUs
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         // Get element from your local data at this position and replace the
         // contents of the view with that element
-        viewHolder.userName.setText(modelBuilder.getPersonalUser().getUser().get(position).getName());
-        viewHolder.onlineStatus.setImageResource(R.drawable.online_status_circle);
+
+        onlineUserList = new ArrayList<>();
+        for (User onlineUser : modelBuilder.getCurrentServer().getUser()) {
+            if (onlineUser.isStatus()) {
+                onlineUserList.add(onlineUser);
+            }
+        }
+
+        User user = onlineUserList.get(position);
+        viewHolder.userName.setText(user.getName());
+        if (user.isStatus()) {
+            viewHolder.onlineStatus.setImageResource(R.drawable.online_status_circle);
+        }
     }
 
     // Return the size of your data (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return modelBuilder.getPersonalUser().getUser().size();
+        int counter = 0;
+        for (User onlineUser : modelBuilder.getCurrentServer().getUser()) {
+            if (onlineUser.isStatus()) {
+                counter++;
+            }
+        }
+        return counter;
     }
 
     public User getItem(int position) {
-        return modelBuilder.getPersonalUser().getUser().get(position);
+        onlineUserList.clear();
+        onlineUserList = new ArrayList<>();
+        for (User onlineUser : modelBuilder.getCurrentServer().getUser()) {
+            if (onlineUser.isStatus()) {
+                onlineUserList.add(onlineUser);
+            }
+        }
+        return onlineUserList.get(position);
     }
 }

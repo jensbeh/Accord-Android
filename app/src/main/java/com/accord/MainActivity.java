@@ -2,6 +2,7 @@ package com.accord;
 
 import static com.accord.util.Constants.CHAT_WEBSOCKET_PATH;
 import static com.accord.util.Constants.SERVER_SYSTEM_WEBSOCKET_PATH;
+import static com.accord.util.Constants.SERVER_WEBSOCKET_PATH;
 import static com.accord.util.Constants.SYSTEM_WEBSOCKET_PATH;
 import static com.accord.util.Constants.WS_SERVER_URL;
 
@@ -21,13 +22,15 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.accord.adapter.OnlineUserRecyclerViewAdapter;
-import com.accord.adapter.ServerRecyclerViewAdapter;
+import com.accord.adapter.leftDrawer.ServerRecyclerViewAdapter;
+import com.accord.adapter.rightDrawer.OnlineUserRecyclerViewAdapter;
 import com.accord.bottomSheets.BottomSheetCreateServer;
 import com.accord.model.Categories;
 import com.accord.model.Channel;
@@ -36,29 +39,29 @@ import com.accord.model.Server;
 import com.accord.model.ServerChannel;
 import com.accord.model.User;
 import com.accord.net.rest.RestClient;
+import com.accord.net.rest.responses.ResponseWithJsonList;
+import com.accord.net.rest.responses.ResponseWithJsonObject;
 import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
+import com.accord.net.webSocket.chatSockets.ServerChatWebSocket;
 import com.accord.net.webSocket.systemSockets.ServerSystemWebSocket;
 import com.accord.net.webSocket.systemSockets.SystemWebSocket;
-import com.accord.ui.chatMessages.PrivateMessageFragment;
+import com.accord.ui.chatMessages.PrivateMessagesFragment;
+import com.accord.ui.chatMessages.ServerMessagesFragment;
 import com.accord.ui.home.HomeFragment;
+import com.accord.ui.home.OnlineUsersFragment;
 import com.accord.ui.home.PrivateChatsFragment;
 import com.accord.ui.server.ServerFragment;
 import com.accord.ui.server.ServerItemsFragment;
+import com.accord.ui.server.ServerMembersFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 // upgraded gradle from 4.2.2 to 7.0.2
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -68,19 +71,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawer;
     private NavigationView navigationViewLeft;
     private HomeFragment homeController;
+    private OnlineUsersFragment onlineUserController;
     private PrivateChatsFragment privateChatsController;
     private ServerItemsFragment serverItemsController;
-    private PrivateMessageFragment privateMessageController;
+    private PrivateMessagesFragment privateMessageController;
+    private ServerMessagesFragment serverMessageController;
     private ServerFragment serverController;
-
-    public void showMessages() {
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                builder.getPrivateMessageController()).commit();
-    }
-
-    public void closeLeftDrawer() {
-        drawer.closeDrawer(findViewById(R.id.nav_view_left));
-    }
+    private ServerMembersFragment serverMembersController;
 
     public enum State {
         HomeView,
@@ -95,12 +92,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private CardView button_addServer;
     private NavigationView navigationViewRight;
     private RecyclerView rv_server;
-    private RecyclerView rv_onlineUser;
     private OnlineUserRecyclerViewAdapter onlineUserRecyclerViewAdapter;
     private ServerRecyclerViewAdapter serverRecyclerViewAdapter;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private String KEY_PREFS = "privateChats";
+
+    // notifications
+    private NotificationManagerCompat notificationManagerCompat;
 
     @SuppressLint("CommitPrefEdits")
     @Override
@@ -116,13 +115,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // Create ModelBuilder
         builder = new ModelBuilder();
-        builder.buildPersonalUser(username, userKey);
+        builder.buildPersonalUser(username, password, userKey);
         builder.setState(State.HomeView);
         builder.setMainActivity(this);
 
+        // set notification manager to builder
+        
+
+        // create RestClient
         restClient = new RestClient();
         restClient.setup();
+        builder.setRestClient(restClient);
 
+        // get drawer
         drawer = findViewById(R.id.drawer_layout);
         navigationViewLeft = findViewById(R.id.nav_view_left);
         navigationViewRight = findViewById(R.id.nav_view_right);
@@ -130,13 +135,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // Setup navigation and screen when start
         homeController = new HomeFragment(builder);
+        onlineUserController = new OnlineUsersFragment(builder);
         privateChatsController = new PrivateChatsFragment(builder);
-        privateMessageController = new PrivateMessageFragment(builder);
+        privateMessageController = new PrivateMessagesFragment(builder);
+        serverMessageController = new ServerMessagesFragment(builder);
         serverController = new ServerFragment(builder);
         serverItemsController = new ServerItemsFragment(builder);
+        serverMembersController = new ServerMembersFragment(builder);
 
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
                     homeController).commit();
             navigationViewLeft.setCheckedItem(R.id.nav_Home);
 
@@ -147,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         ////////////////////////////////////////////////////
 
         rv_server = navigationViewLeft.findViewById(R.id.rv_server);
-        rv_onlineUser = navigationViewRight.findViewById(R.id.rv_onlineUser);
         button_logout = navigationViewLeft.findViewById(R.id.button_logout);
         button_Home = navigationViewLeft.findViewById(R.id.button_Home);
         button_addServer = navigationViewLeft.findViewById(R.id.button_add);
@@ -158,8 +165,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         text_userKey.setText(builder.getPersonalUser().getUserKey());
 
         builder.setHomeController(homeController);
+        builder.setOnlineUserController(onlineUserController);
+        builder.setPrivateChatsController(privateChatsController);
         builder.setPrivateMessageController(privateMessageController);
+        builder.setServerMessageController(serverMessageController);
         builder.setServerController(serverController);
+        builder.setServerMembersController(serverMembersController);
 
         button_logout.setOnClickListener(this::onLogoutButtonClick);
         button_Home.setOnClickListener(this::onHomeButtonClick);
@@ -172,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         loadData();
 
         // setup RecyclerViews with listener
-        setupOnlineUserRecyclerView();
+        showOnlineUsers();
         setupServersRecyclerView();
 
         // setup webSockets for system messages and private chats
@@ -183,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         loadServer(() -> {
             System.out.println("All server loaded!");
             // after loading all servers create the webSockets
-            setupServerSystemWebSocket();
+            setupServerWebSockets();
         });
 
         // add navigationBar listener
@@ -238,24 +249,29 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void loadServer(FullyLoadedCallback fullyLoadedCallback) {
-        restClient.doGetServer(builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
-            @Override
-            public void onSuccess(String status, List data) {
-                System.out.print(status);
-                System.out.print(data);
-                for (int i = 0; i < data.size(); i++) {
-                    Map<String, String> serverMap = (Map<String, String>) data.get(i);
-                    String serverName = serverMap.get("name");
-                    String serverId = serverMap.get("id");
+        restClient.doGetServer(builder.getPersonalUser().getUserKey(), new RestClient.ResponseCallbackWithList() {
+            private int loadedServers = 0;
 
-                    Server server = builder.buildServer(serverName, serverId);
-                    loadServerUsers(server, new ServerUserCallback() {
+            @Override
+            public void onSuccess(String status, ArrayList<ResponseWithJsonList.Data> dataArrayList) {
+                for (ResponseWithJsonList.Data data : dataArrayList) {
+                    String serverId = data.getId();
+                    String serverName = data.getName();
+
+                    Server loadedServer = builder.buildServer(serverName, serverId);
+                    loadServerUsers(loadedServer, new ServerUserCallback() {
                         @Override
                         public void onSuccess(String status) {
-                            loadCategories(server, new CategoriesLoadedCallback() {
+                            loadCategories(loadedServer, new CategoriesLoadedCallback() {
                                 @Override
                                 public void onSuccess(String status) {
-                                    fullyLoadedCallback.onSuccess();
+                                    // categories ready
+                                    loadedServers++;
+                                    if (loadedServers == dataArrayList.size()) {
+                                        loadedServers = 0;
+//                                        categoriesLoadedCallback.onSuccess(status1);
+                                        fullyLoadedCallback.onSuccess();
+                                    }
                                 }
                             });
                         }
@@ -271,32 +287,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
     }
 
-    private void loadServerUsers(Server server, ServerUserCallback serverUserCallback) {
-        restClient.doGetServerUsers(server.getId(), builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithObject() {
+    public void loadServerUsers(Server server, ServerUserCallback serverUserCallback) {
+        restClient.doGetServerUsers(server.getId(), builder.getPersonalUser().getUserKey(), new RestClient.ResponseCallbackWithObject() {
 
             @Override
-            public void onSuccess(String status, Object data) {
+            public void onSuccess(String status, ResponseWithJsonObject.Data data) {
                 System.out.print(status);
                 System.out.print(data);
 
-                try {
-                    Gson gson = new Gson();
-                    JSONObject dataJSON = new JSONObject(gson.toJsonTree(data).getAsJsonObject().toString());
+                server.setOwner(data.getOwner());
+                for (ResponseWithJsonObject.Member member : data.getMembers()) {
+                    String id = member.getId();
+                    String description = member.getDescription();
+                    String name = member.getName();
+                    boolean online = member.isOnline();
+                    builder.buildServerUser(server, name, id, online, description);
+                }
 
-                    server.setOwner(dataJSON.getString("owner"));
-
-                    JSONArray members = dataJSON.getJSONArray("members");
-
-                    for (int i = 0; i < members.length(); i++) {
-                        String id = members.getJSONObject(i).getString("id");
-                        String description = members.getJSONObject(i).getString("description");
-                        String name = members.getJSONObject(i).getString("name");
-                        boolean online = Boolean.getBoolean(members.getJSONObject(i).getString("online"));
-                        builder.buildServerUser(server, name, id, online, description);
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                for (int i = 0; i < 5; i++) {
+                    builder.buildServerUser(server, "testUser" + i, "id" + i, true, "description");
+                }
+                for (int i = 5; i < 15; i++) {
+                    builder.buildServerUser(server, "testUser" + i, "id" + i, false, "description");
                 }
 
                 serverUserCallback.onSuccess(status);
@@ -316,34 +328,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         void onSuccess(String status);
     }
 
-    private void loadCategories(Server server, CategoriesLoadedCallback categoriesLoadedCallback) {
-        restClient.doGetCategories(server.getId(), builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+    public void loadCategories(Server server, CategoriesLoadedCallback categoriesLoadedCallback) {
+        restClient.doGetCategories(server.getId(), builder.getPersonalUser().getUserKey(), new RestClient.ResponseCallbackWithList() {
 
             private int loadedCategories = 0;
 
             @Override
-            public void onSuccess(String status, List data) {
+            public void onSuccess(String status, ArrayList<ResponseWithJsonList.Data> dataArrayList) {
                 System.out.print(status);
-                System.out.print(data);
 
-                for (int i = 0; i < data.size(); i++) {
-                    Map<String, String> categoryMap = (Map<String, String>) data.get(i);
-                    String categoryName = categoryMap.get("name");
-                    String categoryId = categoryMap.get("id");
+                for (ResponseWithJsonList.Data data : dataArrayList) {
+                    String categoryName = data.getName();
+                    String categoryId = data.getId();
 
-                    Categories category = new Categories().setId(categoryId).setName(categoryName);
-                    server.withCategories(category);
+                    Categories loadedCategory = new Categories().setId(categoryId).setName(categoryName);
+                    server.withCategories(loadedCategory);
 
-                    loadChannel(server, category, status1 -> {
+                    loadChannel(server, loadedCategory, status1 -> {
                         loadedCategories++;
-                        if (loadedCategories == data.size()) {
+                        if (loadedCategories == dataArrayList.size()) {
                             loadedCategories = 0;
                             categoriesLoadedCallback.onSuccess(status1);
                         }
                     });
                 }
                 updateServerRV();
-//                fullyLoadedCallback.onSuccess();
             }
 
             @Override
@@ -362,20 +371,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void loadChannel(Server server, Categories category, ChannelLoadedCallback channelLoadedCallback) {
-        restClient.doGetChannels(server.getId(), category.getId(), builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+        restClient.doGetChannels(server.getId(), category.getId(), builder.getPersonalUser().getUserKey(), new RestClient.ResponseCallbackWithList() {
 
             private int loadedChannel = 0;
 
             @Override
-            public void onSuccess(String status, List data) {
+            public void onSuccess(String status, ArrayList<ResponseWithJsonList.Data> dataArrayList) {
                 System.out.print(status);
-                System.out.print(data);
-                for (int i = 0; i < data.size(); i++) {
-                    Map<String, Object> channelsMap = (Map<String, Object>) data.get(i);
-                    String channelName = (String) channelsMap.get("name");
-                    String channelId = (String) channelsMap.get("id");
-                    String channelType = (String) channelsMap.get("type");
-                    boolean channelIsPrivileged = (boolean) channelsMap.get("privileged");
+                for (ResponseWithJsonList.Data data : dataArrayList) {
+                    String channelName = data.getName();
+                    String channelId = data.getId();
+                    String channelType = data.getType();
+                    boolean channelIsPrivileged = data.isPrivileged();
+
                     ServerChannel serverChannel = new ServerChannel();
                     serverChannel.setId(channelId);
                     serverChannel.setName(channelName);
@@ -383,19 +391,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     serverChannel.setPrivilege(channelIsPrivileged);
                     category.withChannel(serverChannel);
 
-                    ArrayList<String> audioMemberIds = (ArrayList<String>) channelsMap.get("audioMembers");
-                    for (String id : audioMemberIds) {
+                    for (ResponseWithJsonList.AudioMember audioMember : data.getAudioMembers()) {
                         for (User user : server.getUser()) {
-                            if (user.getId().equals(id)) {
+                            if (user.getId().equals(audioMember.getId())) {
                                 serverChannel.withAudioMember(user);
                             }
                         }
                     }
 
-                    ArrayList<String> membersIds = (ArrayList<String>) channelsMap.get("members");
-                    for (String id : membersIds) {
+                    for (ResponseWithJsonList.Member member : data.getMembers()) {
                         for (User user : server.getUser()) {
-                            if (user.getId().equals(id)) {
+                            if (user.getId().equals(member.getId())) {
                                 serverChannel.withPrivilegedUsers(user);
                             }
                         }
@@ -403,14 +409,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     if (serverChannel.getType().equals("text")) {
                         loadMessages(server, category, serverChannel, status1 -> {
                             loadedChannel++;
-                            if (loadedChannel == data.size()) {
+                            if (loadedChannel == dataArrayList.size()) {
                                 loadedChannel = 0;
                                 channelLoadedCallback.onSuccess(status1);
                             }
                         });
                     } else {
                         loadedChannel++;
-                        if (loadedChannel == data.size()) {
+                        if (loadedChannel == dataArrayList.size()) {
                             loadedChannel = 0;
                             channelLoadedCallback.onSuccess("success");
                         }
@@ -434,22 +440,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void loadMessages(Server server, Categories category, ServerChannel serverChannel, MessagesLoadedCallback messagesLoadedCallback) {
-        restClient.doGetMessages(new Date().getTime(), server.getId(), category.getId(), serverChannel.getId(), builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+        restClient.doGetMessages(new Date().getTime(), server.getId(), category.getId(), serverChannel.getId(), builder.getPersonalUser().getUserKey(), new RestClient.ResponseCallbackWithList() {
 
             @Override
-            public void onSuccess(String status, List data) {
+            public void onSuccess(String status, ArrayList<ResponseWithJsonList.Data> dataArrayList) {
                 System.out.print(status);
-                System.out.print(data);
-                for (int i = 0; i < data.size(); i++) {
-                    Map<String, Object> messageMap = (Map<String, Object>) data.get(i);
-                    String from = (String) messageMap.get("from");
-                    double timestampDouble = (double) messageMap.get("timestamp");
-                    long timestamp = (long) timestampDouble;
-                    String text = (String) messageMap.get("text");
-                    String id = (String) messageMap.get("id");
 
-                    Message message = new Message().setMessage(text).setFrom(from).setTimestamp(timestamp).setId(id);
-                    serverChannel.withMessage(message);
+                for (ResponseWithJsonList.Data data : dataArrayList) {
+                    String from = data.getFrom();
+//                    double timestampDouble = (double) messageMap.get("timestamp");
+//                    long timestamp = (long) timestampDouble;
+                    long timestamp = data.getTimestamp();
+                    String text = data.getText();
+                    String id = data.getId();
+
+                    Message loadedMessage = new Message().setMessage(text).setFrom(from).setTimestamp(timestamp).setId(id);
+                    serverChannel.withMessage(loadedMessage);
                 }
                 messagesLoadedCallback.onSuccess(status);
             }
@@ -477,10 +483,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    private void setupServerSystemWebSocket() {
+    private void setupServerWebSockets() {
         for (Server server : builder.getPersonalUser().getServer()) {
-            ServerSystemWebSocket serverSystemWebSocket = new ServerSystemWebSocket(builder, URI.create(WS_SERVER_URL + SERVER_SYSTEM_WEBSOCKET_PATH + server.getId()));
+            ServerSystemWebSocket serverSystemWebSocket = new ServerSystemWebSocket(builder, server, URI.create(WS_SERVER_URL + SERVER_SYSTEM_WEBSOCKET_PATH + server.getId()));
             builder.addServerSystemWebSocket(server.getId(), serverSystemWebSocket);
+
+            ServerChatWebSocket serverChatWebSocket = new ServerChatWebSocket(builder, server, URI.create(WS_SERVER_URL + CHAT_WEBSOCKET_PATH + builder.getPersonalUser().getName() + SERVER_WEBSOCKET_PATH + server.getId()));
+            builder.addServerChatWebSocket(server.getId(), serverChatWebSocket);
         }
     }
 
@@ -492,11 +501,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             builder.setCurrentServer(null);
             updateServerRV();
 
+            // show online user fragment
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_user,
+                    onlineUserController).commit();
+
             if (builder.getSelectedPrivateChat() == null) {
                 // show home
                 Toast.makeText(this, "to Home", Toast.LENGTH_SHORT).show();
                 builder.setState(State.HomeView);
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
                         homeController).commit();
 
                 // change to private chats fragment
@@ -511,9 +524,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_items,
                         privateChatsController).commit();
 
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
                         privateMessageController).commit();
             }
+
+            updateHomeButtonColor();
+        }
+    }
+
+    private void updateHomeButtonColor() {
+        if (builder.getState() != State.ServerView) {
+            // home clicked color
+            button_Home.setCardBackgroundColor(ContextCompat.getColor(this, R.color.homeButtonClicked));
+        } else {
+            // home normal color
+            button_Home.setCardBackgroundColor(ContextCompat.getColor(this, R.color.homeButtonNormal));
         }
     }
 
@@ -523,21 +548,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      */
     public void loadOnlineUsers() {
         // Get Online User
-        restClient.doGetOnlineUser(builder.getPersonalUser().getUserKey(), new RestClient.GetCallbackWithList() {
+        restClient.doGetOnlineUser(builder.getPersonalUser().getUserKey(), new RestClient.ResponseCallbackWithList() {
             @SuppressLint("NotifyDataSetChanged")
             @Override
-            public void onSuccess(String status, List data) {
-                for (int i = 0; i < data.size(); i++) {
-                    Map<String, String> userMap = (Map<String, String>) data.get(i);
-                    String userName = userMap.get("name");
-                    String userId = userMap.get("id");
-                    String userDescription = userMap.get("description");
+            public void onSuccess(String status, ArrayList<ResponseWithJsonList.Data> dataArrayList) {
+                for (ResponseWithJsonList.Data data : dataArrayList) {
+                    String userName = data.getName();
+                    String userId = data.getId();
+                    String userDescription = data.getDescription();
 
-                    //if (!userName.equals(modelBuilder.getPersonalUser().getName())) {
-                    builder.buildUser(userName, userId);
-                    //}
+                    if (!userName.equals(builder.getPersonalUser().getName())) {
+                        builder.buildUser(userName, userId, userDescription);
+                    } else {
+                        builder.getPersonalUser().setId(userId);
+                    }
                 }
-                updateOnlineUserRV();
+                builder.getOnlineUserController().updateOnlineUsersRV();
             }
 
             @Override
@@ -545,84 +571,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 System.out.print("Error: " + error.getMessage());
             }
         });
-    }
-
-    /**
-     * shows all online users and setup handler
-     */
-    private void setupOnlineUserRecyclerView() {
-        rv_onlineUser.setHasFixedSize(true);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        onlineUserRecyclerViewAdapter = new OnlineUserRecyclerViewAdapter(this, builder);
-
-        rv_onlineUser.setLayoutManager(layoutManager);
-        rv_onlineUser.setAdapter(onlineUserRecyclerViewAdapter);
-
-        onlineUserRecyclerViewAdapter.setOnItemClickListener(new OnlineUserRecyclerViewAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(View view, User user) {
-                if (user != null) {
-                    onOnlineUserClicked(user);
-                }
-            }
-
-            @Override
-            public void onItemLongClick(View view, User user) {
-                if (user != null) {
-                    onOnlineUserLongClicked(user);
-                }
-            }
-        });
-    }
-
-    /**
-     * short click on online user
-     */
-    private void onOnlineUserClicked(User user) {
-        String userName = user.getName();
-        //Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
-
-        Channel currentChannel = builder.getSelectedPrivateChat();
-        boolean chatExisting = false;
-        String selectedUserName = user.getName();
-        String selectUserId = user.getId();
-
-        for (Channel channel : builder.getPersonalUser().getPrivateChat()) {
-            if (channel.getName().equals(selectedUserName)) {
-                builder.setSelectedPrivateChat(channel);
-                privateChatsController.updatePrivateChatsRV();
-                privateMessageController.notifyOnChatChanged();
-                chatExisting = true;
-                break;
-            }
-        }
-
-        if ((builder.getState() == State.HomeView && !chatExisting)) {
-            builder.setState(State.PrivateChatView);
-            builder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
-            builder.getPersonalUser().withPrivateChat(builder.getSelectedPrivateChat());
-            chatExisting = true;
-            privateChatsController.updatePrivateChatsRV();
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    privateMessageController).commit();
-        }
-
-        if (builder.getState() == State.PrivateChatView && !chatExisting) {
-            builder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
-            builder.getPersonalUser().withPrivateChat(builder.getSelectedPrivateChat());
-            chatExisting = true;
-            privateChatsController.updatePrivateChatsRV();
-            privateMessageController.notifyOnChatChanged();
-        }
-        drawer.closeDrawer(findViewById(R.id.nav_view_right));
-    }
-
-    /**
-     * long click on online user
-     */
-    private void onOnlineUserLongClicked(User user) {
-        String userId = user.getId();
-        Toast.makeText(MainActivity.this, userId, Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -652,25 +600,64 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     /**
      * short click on server
      */
-    private void onServerClicked(Server server) {
-        String serverName = server.getName();
-        Toast.makeText(MainActivity.this, serverName, Toast.LENGTH_LONG).show();
+    public void onServerClicked(Server server) {
+        if (builder.getCurrentServer() == null || builder.getCurrentServer() != server) {
 
-        builder.setCurrentServer(server);
-        updateServerRV();
+            String serverName = server.getName();
+            Toast.makeText(MainActivity.this, serverName, Toast.LENGTH_LONG).show();
 
-        // change to server items fragment
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_items,
-                serverItemsController).commit();
+            Server oldServer = builder.getCurrentServer();
+            builder.setCurrentServer(server);
+            updateServerRV();
 
-        if (builder.getState() != State.ServerView) {
-            builder.setState(State.ServerView);
-            privateChatsController.updatePrivateChatsRV();
-            //rv_serverChannel.setVisibility(View.VISIBLE);
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    serverController).commit();
-        } else {
-            serverController.updateServerFragment();
+            if (builder.getState() == State.ServerView) {
+                // if in server view
+                serverItemsController.updateServerItemsFragment();
+
+                // show members when serverMemberFragment is loaded yet
+                serverMembersController.updateOnlineMembersRV();
+                serverMembersController.updateOfflineMembersRV();
+                serverMembersController.updateOnlineOfflineMemberCount();
+
+                // state fragment container handle
+                if (oldServer.getCurrentServerChannel() == null && server.getCurrentServerChannel() != null) {
+                    // if serverView was loaded and server chatView has to be loaded
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
+                            serverMessageController).commit();
+                } else if (oldServer.getCurrentServerChannel() != null && server.getCurrentServerChannel() != null) {
+                    // if server chatView was loaded and server chatView has to be loaded
+                    serverMessageController.notifyOnChannelChanged();
+                } else if (oldServer.getCurrentServerChannel() != null && server.getCurrentServerChannel() == null) {
+                    // if server chatView was loaded and server view has to be loaded
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
+                            serverController).commit();
+                } else if (oldServer.getCurrentServerChannel() == null && server.getCurrentServerChannel() == null) {
+                    // if server chatView was loaded and server view has to be loaded
+                    serverController.updateServerFragment();
+                }
+            } else if (builder.getState() != State.ServerView) {
+                // if coming from home or private view
+                builder.setState(State.ServerView);
+                updateHomeButtonColor();
+
+                // change to server items fragment
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_items,
+                        serverItemsController).commit();
+
+                if (server.getCurrentServerChannel() != null) {
+                    // change to chat if existing
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
+                            serverMessageController).commit();
+                } else {
+                    // show empty server page if no chat was opened
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
+                            serverController).commit();
+                }
+
+                // show server members
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_user,
+                        serverMembersController).commit();
+            }
         }
     }
 
@@ -686,7 +673,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * button handler to create a server
      */
     private void onAddServerButtonClick(View view) {
-        // TODO Server erstellen
         Toast.makeText(this, "add a new server", Toast.LENGTH_SHORT).show();
 
         // create bottomSheet for create server with all actions
@@ -702,17 +688,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.nav_Home:
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
                         homeController).commit();
                 Toast.makeText(this, builder.getPersonalUser().getName(), Toast.LENGTH_SHORT).show();
                 break;
             case R.id.nav_PrivateChat:
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
                         privateMessageController).commit();
                 Toast.makeText(this, builder.getPersonalUser().getUserKey(), Toast.LENGTH_SHORT).show();
                 break;
             case R.id.nav_Server:
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
                         serverController).commit();
                 break;
         }
@@ -745,11 +731,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void onLogoutButtonClick(View view) {
         saveData();
 
-        restClient.doLogout(builder.getPersonalUser().getUserKey(), new RestClient.PostCallback() {
+        restClient.doLogout(builder.getPersonalUser().getUserKey(), new RestClient.ResponseCallbackWithObject() {
             @Override
-            public void onSuccess(String status, Map<String, String> data) {
+            public void onSuccess(String status, ResponseWithJsonObject.Data data) {
                 System.out.print(status);
-                System.out.print(data);
 
                 showLoginActivity();
             }
@@ -807,6 +792,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void updateOnlineUserRV() {
-        runOnUiThread(() -> onlineUserRecyclerViewAdapter.notifyDataSetChanged());
+    }
+
+    public void showPrivateMessages() {
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
+                builder.getPrivateMessageController()).commit();
+    }
+
+    public void showServerMessages() {
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
+                builder.getServerMessageController()).commit();
+    }
+
+    public void showEmptyServerFragment() {
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_main,
+                serverController).commit();
+    }
+
+    private void showOnlineUsers() {
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_user,
+                onlineUserController).commit();
+    }
+
+    public void closeLeftDrawer() {
+        drawer.closeDrawer(findViewById(R.id.nav_view_left));
+    }
+
+    public void closeRightDrawer() {
+        drawer.closeDrawer(findViewById(R.id.nav_view_right));
     }
 }

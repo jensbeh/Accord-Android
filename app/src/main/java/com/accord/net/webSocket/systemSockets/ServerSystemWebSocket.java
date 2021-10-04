@@ -5,6 +5,9 @@ import android.os.StrictMode;
 import android.widget.Toast;
 
 import com.accord.ModelBuilder;
+import com.accord.model.Categories;
+import com.accord.model.Server;
+import com.accord.model.ServerChannel;
 import com.accord.net.webSocket.CustomWebSocketConfigurator;
 
 import org.json.JSONException;
@@ -26,13 +29,15 @@ import javax.websocket.WebSocketContainer;
 
 public class ServerSystemWebSocket extends Endpoint {
     private ModelBuilder builder;
+    private Server server;
 
     private Session session;
     private Timer noopTimer;
     public static final String COM_NOOP = "noop";
 
-    public ServerSystemWebSocket(ModelBuilder modelBuilder, URI endpoint) {
+    public ServerSystemWebSocket(ModelBuilder modelBuilder, Server server, URI endpoint) {
         this.builder = modelBuilder;
+        this.server = server;
         this.noopTimer = new Timer();
 
         try {
@@ -131,9 +136,9 @@ public class ServerSystemWebSocket extends Endpoint {
 //            updateCategory(jsonData);
 //        }
 //
-//        if (userAction.equals("channelCreated")) {
-//            createChannel(jsonData);
-//        }
+        if (userAction.equals("channelCreated")) {
+            createChannel(jsonData);
+        }
 //        if (userAction.equals("channelDeleted")) {
 //            deleteChannel(jsonData);
 //        }
@@ -148,17 +153,18 @@ public class ServerSystemWebSocket extends Endpoint {
 //            userExited(jsonData);
 //        }
 //
-//        if (userAction.equals("userJoined")) {
-//            buildServerUser(userName, userId, true, "");
-//            serverViewController.showOnlineOfflineUsers();
-//        }
-//        if (userAction.equals("userLeft")) {
-//            if (userName.equals(builder.getPersonalUser().getName()) && builder.getCurrentServer() == serverViewController.getServer()) {
-//                Platform.runLater(() -> builder.getStageManager().showLoginScreen());
-//            }
-//            buildServerUser(userName, userId, false, "");
-//            serverViewController.showOnlineOfflineUsers();
-//        }
+        if (userAction.equals("userJoined")) {
+            builder.buildServerUser(server, userName, userId, true, "");
+            builder.getServerMembersController().updateOnlineMembersRV();
+            builder.getServerMembersController().updateOfflineMembersRV();
+            builder.getServerMembersController().updateOnlineOfflineMemberCount();
+        }
+        if (userAction.equals("userLeft")) {
+            builder.buildServerUser(server, userName, userId, false, "");
+            builder.getServerMembersController().updateOnlineMembersRV();
+            builder.getServerMembersController().updateOfflineMembersRV();
+            builder.getServerMembersController().updateOnlineOfflineMemberCount();
+        }
 //
 //        if (userAction.equals("serverDeleted")) {
 //            deleteServer();
@@ -186,5 +192,43 @@ public class ServerSystemWebSocket extends Endpoint {
 //        if (builder.getCurrentServer() == serverViewController.getServer()) {
 //            serverViewController.showOnlineOfflineUsers();
 //        }
+    }
+
+    /**
+     * adds the new channel to category for the user
+     *
+     * @param jsonData the message data
+     */
+    private void createChannel(JSONObject jsonData) throws JSONException {
+        for (Server server : builder.getPersonalUser().getServer()) {
+            if (findCategoryForNewChannel(server, jsonData)) {
+                break;
+            }
+        }
+    }
+
+    private boolean findCategoryForNewChannel(Server server, JSONObject jsonData) throws JSONException {
+        String channelId = jsonData.getString("id");
+        String channelName = jsonData.getString("name");
+        String channelType = jsonData.getString("type");
+        boolean channelPrivileged = jsonData.getBoolean("privileged");
+        String categoryId = jsonData.getString("category");
+
+        for (Categories category : server.getCategories()) {
+            if (category.getId().equals(categoryId)) {
+                ServerChannel newChannel = new ServerChannel();
+                newChannel.setId(channelId);
+                newChannel.setType(channelType);
+                newChannel.setName(channelName);
+                newChannel.setPrivilege(channelPrivileged);
+                category.withChannel(newChannel);
+
+                // update category with the new channel
+                builder.getServerCategoriesAdapter().notifyItemChanged(server.getCategories().indexOf(category));
+
+                return true;
+            }
+        }
+        return false;
     }
 }

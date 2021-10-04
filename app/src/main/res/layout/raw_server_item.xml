@@ -13,8 +13,9 @@
         android:layout_marginStart="5dp"
         android:layout_marginTop="2dp"
         android:layout_marginBottom="2dp"
+        android:foreground="?android:attr/selectableItemBackground"
         card_view:cardCornerRadius="50dp"
-        card_view:cardBackgroundColor="@color/privateChatClicked">
+        card_view:cardBackgroundColor="@color/serverButtonClicked">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"

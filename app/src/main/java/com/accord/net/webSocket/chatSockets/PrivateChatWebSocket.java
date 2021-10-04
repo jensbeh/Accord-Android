@@ -130,31 +130,33 @@ public class PrivateChatWebSocket extends Endpoint {
             System.out.println(msg);
 
             if (msg.has("channel") && msg.getString("channel").equals("private")) {
-                Message message;
                 String channelName;
                 Boolean newChat = true;
 
                 Date date = new Date();
                 String currentTime = timeFormatter.format(date);
 
-                // currentUser send
+                Message message = new Message().setMessage(msg.getString("message")).
+                        setFrom(msg.getString("from")).
+                        setTimestamp(msg.getLong("timestamp")).setCurrentTime(currentTime);
+
                 if (msg.getString("from").equals(builder.getPersonalUser().getName())) {
+                    // currentUser send
                     channelName = msg.getString("to");
-                    message = new Message().setMessage(msg.getString("message")).
-                            setFrom(msg.getString("from")).
-                            setTimestamp(msg.getLong("timestamp")).setCurrentTime(currentTime);
+
                     builder.getPrivateMessageController().clearMessageField();
-                } else { // currentUser received
+                } else {
+                    // currentUser received
                     channelName = msg.getString("from");
-                    message = new Message().setMessage(msg.getString("message")).
-                            setFrom(msg.getString("from")).
-                            setTimestamp(msg.getLong("timestamp")).setCurrentTime(currentTime);
                 }
                 for (Channel channel : builder.getPersonalUser().getPrivateChat()) {
                     if (channel.getName().equals(channelName)) {
                         channel.withMessage(message);
                         if (builder.getSelectedPrivateChat() == null || channel != builder.getSelectedPrivateChat()) {
+                            // unread message
                             channel.setUnreadMessagesCounter(channel.getUnreadMessagesCounter() + 1);
+                            // notification
+                            builder.getPrivateChatsController().updateSinglePrivateChatInRV(channel);
                         }
                         privateChatsController.updatePrivateChatsRV();
                         builder.getPrivateMessageController().notifyOnMessageAdded();

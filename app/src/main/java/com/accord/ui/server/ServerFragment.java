@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.ModelBuilder;
 import com.accord.R;
-import com.accord.adapter.OnlineUserRecyclerViewAdapter;
+import com.accord.adapter.rightDrawer.OnlineUserRecyclerViewAdapter;
 import com.accord.model.User;
 
 public class ServerFragment extends Fragment {
@@ -60,7 +60,7 @@ public class ServerFragment extends Fragment {
 
         String username = et_test.getText().toString();
 
-        modelBuilder.buildUser(username, "Random" + modelBuilder.getPersonalUser().getUser().size());
+        modelBuilder.buildUser(username, "Random" + modelBuilder.getPersonalUser().getUser().size(), "");
         testAdapter.notifyDataSetChanged();
     }
 

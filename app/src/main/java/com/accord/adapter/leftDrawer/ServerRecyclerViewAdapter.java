@@ -1,4 +1,4 @@
-package com.accord.adapter;
+package com.accord.adapter.leftDrawer;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -93,9 +93,9 @@ public class ServerRecyclerViewAdapter extends RecyclerView.Adapter<ServerRecycl
         //viewHolder.onlineStatus.setImageResource(R.drawable.online_status_circle);
 
         if (modelBuilder.getCurrentServer() == modelBuilder.getPersonalUser().getServer().get(position) && modelBuilder.getState() == MainActivity.State.ServerView) {
-            viewHolder.serverCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.privateChatClicked));
+            viewHolder.serverCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.serverButtonClicked));
         } else {
-            viewHolder.serverCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.privateChat));
+            viewHolder.serverCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.serverButtonNormal));
         }
 
     }

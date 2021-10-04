@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginStart="10dp"
-                android:text="@string/categoryName"
+                android:text="@string/serverName"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"

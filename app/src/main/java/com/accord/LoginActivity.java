@@ -8,14 +8,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.accord.net.rest.RestApi;
 import com.accord.net.rest.RestClient;
-
-import java.util.Map;
+import com.accord.net.rest.responses.ResponseWithJsonObject;
 
 public class LoginActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
@@ -24,7 +21,6 @@ public class LoginActivity extends AppCompatActivity {
     private EditText editText_password;
     private Button button_logIn;
     private Button button_signIn;
-    private RestApi restApi;
     private TextView textView_info;
     private CheckBox checkBox_rememberMe;
     private CheckBox checkbox_loginTempUser;
@@ -58,23 +54,6 @@ public class LoginActivity extends AppCompatActivity {
 
         restClient = new RestClient();
         restClient.setup();
-
-
-        /*
-        // RestAPI
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(REST_SERVER_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        restApi = retrofit.create(RestApi.class);
-
-        //userKey = restClient.getPostRequests().getData().get("userKey").toString();
-        System.out.print("XXX");
-
-        restClient.createGet(restApi.getUsers(userKey));
-        //onlineUser = restClient.getGetRequests().getData();
-        System.out.print("XXX");*/
     }
 
     public void loginButtonClick(View v) {
@@ -95,13 +74,13 @@ public class LoginActivity extends AppCompatActivity {
             String username = editText_username.getText().toString();
             String password = editText_password.getText().toString();
 
-            restClient.doLogin(username, password, new RestClient.PostCallback() {
+            restClient.doLogin(username, password, new RestClient.ResponseCallbackWithObject() {
                 @Override
-                public void onSuccess(String status, Map<String, String> data) {
+                public void onSuccess(String status, ResponseWithJsonObject.Data data) {
                     System.out.print(status);
                     System.out.print(data);
 
-                    String userKey = data.get("userKey");
+                    String userKey = data.getUserKey();
                     System.out.print(userKey);
 
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
@@ -121,6 +100,19 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void singInButtonClick(View view) {
-        Toast.makeText(this, "Coming Soon!", Toast.LENGTH_SHORT).show();
+        String username = editText_username.getText().toString();
+        String password = editText_password.getText().toString();
+
+        restClient.doSignIn(username, password, new RestClient.ResponseCallbackWithObject() {
+            @Override
+            public void onSuccess(String status, ResponseWithJsonObject.Data data) {
+                textView_info.setText("SignIn successfully!");
+            }
+
+            @Override
+            public void onFailed(Throwable error) {
+                System.out.print("Error: " + error.getMessage());
+            }
+        });
     }
 }

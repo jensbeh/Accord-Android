@@ -14,6 +14,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FF0000</color>
     <color name="light_red">#FF2525</color>
+    <color name="light_orange">#FFA754</color>
 
     <!-- Button Colors -->
     <color name="logoutButtonBG">#A6A6A6</color>
@@ -23,11 +24,21 @@
     <color name="button_send">#38b19e</color>
     <color name="enter_message_field">#1f2e34</color>
 
+    <!-- Home Button -->
+    <color name="homeButtonNormal">#3A3A3A</color>
+    <color name="homeButtonClicked">@color/light_grey</color>
+
     <!-- RecyclerView PrivateChats Item -->
+    <color name="privateChatNormal">#3A3A3A</color>
     <color name="privateChatClicked">@color/light_grey</color>
-    <color name="privateChat">#3A3A3A</color>
 
     <!-- RecyclerView Server & Add Item -->
+    <color name="serverButtonNormal">#3A3A3A</color>
+    <color name="serverButtonClicked">@color/light_grey</color>
     <color name="addServerButton">#3A3A3A</color>
+
+    <!-- RecyclerView ServerChannel Item -->
+    <color name="serverChannelNormal">@color/light_grey</color>
+    <color name="serverChannelClicked">#3A3A3A</color>
 
 </resources>

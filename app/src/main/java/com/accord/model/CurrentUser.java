@@ -10,12 +10,16 @@ import java.util.Objects;
 public class CurrentUser
 {
     public static final String PROPERTY_NAME = "name";
+    public static final String PROPERTY_PASSWORD = "password";
     public static final String PROPERTY_USER_KEY = "userKey";
+    public static final String PROPERTY_ID = "id";
     public static final String PROPERTY_USER = "user";
     public static final String PROPERTY_SERVER = "server";
     public static final String PROPERTY_PRIVATE_CHAT = "privateChat";
     private String name;
+    private String password;
     private String userKey;
+    private String id;
     private List<User> user;
     protected PropertyChangeSupport listeners;
     private List<Server> server;
@@ -39,6 +43,24 @@ public class CurrentUser
         return this;
     }
 
+    public String getPassword()
+    {
+        return this.password;
+    }
+
+    public CurrentUser setPassword(String value)
+    {
+        if (Objects.equals(value, this.password))
+        {
+            return this;
+        }
+
+        final String oldValue = this.password;
+        this.password = value;
+        this.firePropertyChange(PROPERTY_PASSWORD, oldValue, value);
+        return this;
+    }
+
     public String getUserKey()
     {
         return this.userKey;
@@ -54,6 +76,24 @@ public class CurrentUser
         final String oldValue = this.userKey;
         this.userKey = value;
         this.firePropertyChange(PROPERTY_USER_KEY, oldValue, value);
+        return this;
+    }
+
+    public String getId()
+    {
+        return this.id;
+    }
+
+    public CurrentUser setId(String value)
+    {
+        if (Objects.equals(value, this.id))
+        {
+            return this;
+        }
+
+        final String oldValue = this.id;
+        this.id = value;
+        this.firePropertyChange(PROPERTY_ID, oldValue, value);
         return this;
     }
 

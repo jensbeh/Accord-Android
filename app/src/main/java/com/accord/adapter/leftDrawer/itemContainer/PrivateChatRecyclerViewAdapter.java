@@ -1,4 +1,4 @@
-package com.accord.adapter;
+package com.accord.adapter.leftDrawer.itemContainer;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,6 +39,8 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private final TextView userName;
         private final TextView lastMessage;
+        private final CardView card_view_notification;
+        private final TextView tv_notification_counter;
         private final ConstraintLayout itemBackground;
         private boolean longClick;
 
@@ -48,6 +51,8 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
             view.setOnLongClickListener(this);
             userName = (TextView) view.findViewById(R.id.tv_rv_userNameChats);
             lastMessage = (TextView) view.findViewById(R.id.tv_rv_lastMessageChats);
+            card_view_notification = (CardView) view.findViewById(R.id.card_view_notification);
+            tv_notification_counter = (TextView) view.findViewById(R.id.tv_notification_counter);
             itemBackground = (ConstraintLayout) view.findViewById(R.id.background_privateChats);
         }
 
@@ -102,7 +107,16 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
             viewHolder.itemBackground.setBackground(ContextCompat.getDrawable(context, R.drawable.private_chat_box_clicked_rounded_corner));
         } else {
             //reset privateChat background
-            viewHolder.itemBackground.setBackgroundColor(ContextCompat.getColor(context, R.color.privateChat));
+            viewHolder.itemBackground.setBackgroundColor(ContextCompat.getColor(context, R.color.privateChatNormal));
+        }
+
+        // notification icon
+        if (channel.getUnreadMessagesCounter() > 0) {
+            viewHolder.card_view_notification.setVisibility(View.VISIBLE);
+            viewHolder.tv_notification_counter.setText(String.valueOf(channel.getUnreadMessagesCounter()));
+        } else {
+            viewHolder.card_view_notification.setVisibility(View.INVISIBLE);
+            viewHolder.tv_notification_counter.setText("");
         }
 
     }

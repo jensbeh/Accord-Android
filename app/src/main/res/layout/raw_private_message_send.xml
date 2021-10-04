@@ -3,30 +3,30 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
     android:layout_marginTop="16dp">
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/cv_message_receive"
+        android:id="@+id/cv_private_message_send"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        app:cardBackgroundColor="@color/receive_message_box"
+        android:layout_marginEnd="10dp"
+        app:cardBackgroundColor="@color/send_message_box"
         app:cardCornerRadius="15dp"
-        app:cardElevation="0dp"
         app:cardPreventCornerOverlap="false"
+        app:cardElevation="0dp"
         app:cardUseCompatPadding="true"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-    <LinearLayout
-            android:id="@+id/layout_gchat_container_other"
+        <LinearLayout
+            android:id="@+id/layout_private_chat_container_me"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tv_message_receive"
+                android:id="@+id/tv_message_send"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
@@ -34,27 +34,27 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
                 android:maxWidth="280dp"
-                android:text="@string/receiveMessage"
+                android:text="CCCCCCcccccccccccccccccccccccccccccccccccccccccccccccccccccccCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 android:elegantTextHeight="true"
                 android:minLines="1"
                 android:singleLine="false"
                 android:ellipsize="end" />
-
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
 
 
     <TextView
-        android:id="@+id/tv_timestamp_receive"
+        android:id="@+id/tv_private_timestamp_send"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/template_time_message"
-        android:textColor="#939393"
         android:textSize="12sp"
+        android:textColor="#939393"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/cv_message_receive" />
+        app:layout_constraintEnd_toStartOf="@+id/cv_private_message_send" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

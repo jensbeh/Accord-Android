@@ -1,4 +1,4 @@
-package com.accord.adapter;
+package com.accord.adapter.leftDrawer.itemContainer;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -23,15 +23,13 @@ public class ServerCategoriesRecyclerViewAdapter extends RecyclerView.Adapter<Se
     private Context context;
     private ModelBuilder builder;
 
-    private ServerChannelsRecyclerViewAdapter serverChannelsRecyclerViewAdapter;
-
     /**
      * Provide a reference to the type of views that you are using
      * (custom ViewHolder).
      */
     public class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView categoryName;
-        private final Button createChannel;
+        private final Button createChannelButton;
         private final LinearLayout ll_clickArea_category;
         private final RecyclerView rv_channel;
 
@@ -39,7 +37,7 @@ public class ServerCategoriesRecyclerViewAdapter extends RecyclerView.Adapter<Se
             super(view);
 
             categoryName = (TextView) view.findViewById(R.id.tv_rv_categoryName);
-            createChannel = (Button) view.findViewById(R.id.button_create_channel);
+            createChannelButton = (Button) view.findViewById(R.id.button_create_channel_plus);
             ll_clickArea_category = (LinearLayout) view.findViewById(R.id.ll_clickArea_category);
             rv_channel = (RecyclerView) view.findViewById(R.id.rv_channel);
         }
@@ -69,7 +67,15 @@ public class ServerCategoriesRecyclerViewAdapter extends RecyclerView.Adapter<Se
         // contents of the view with that element
         Categories category = builder.getCurrentServer().getCategories().get(position);
         viewHolder.categoryName.setText(category.getName());
-        viewHolder.createChannel.setOnClickListener(v -> onChannelCreatedClicked(category));
+
+        if (builder.getCurrentServer().getOwner().equals(builder.getPersonalUser().getId())) {
+            // serverOwner action
+            viewHolder.createChannelButton.setVisibility(View.VISIBLE);
+            viewHolder.createChannelButton.setOnClickListener(v -> onCreateChannelClicked(category));
+        } else {
+            // not serverOwner action
+            viewHolder.createChannelButton.setVisibility(View.INVISIBLE);
+        }
 
         // listener for category name clicked
         viewHolder.ll_clickArea_category.setOnClickListener(v -> onCategoryClicked(category, viewHolder));
@@ -81,10 +87,14 @@ public class ServerCategoriesRecyclerViewAdapter extends RecyclerView.Adapter<Se
         // setup adapter for channels rv
         viewHolder.rv_channel.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
-        serverChannelsRecyclerViewAdapter = new ServerChannelsRecyclerViewAdapter(context, builder, category);
+        ServerChannelsRecyclerViewAdapter serverChannelsRecyclerViewAdapter = new ServerChannelsRecyclerViewAdapter(context, builder, category);
 
         viewHolder.rv_channel.setLayoutManager(layoutManager);
         viewHolder.rv_channel.setAdapter(serverChannelsRecyclerViewAdapter);
+
+        // map to refresh the items between the categories
+        // every time the category is displayed the new adapter is set / will be overwritten if existing (important, else there can't be updated items)
+        builder.getChannelAdapterMap().put(category.getId(), serverChannelsRecyclerViewAdapter);
     }
 
     // Return the size of your data (invoked by the layout manager)
@@ -97,7 +107,7 @@ public class ServerCategoriesRecyclerViewAdapter extends RecyclerView.Adapter<Se
         return builder.getCurrentServer().getCategories().get(position);
     }
 
-    private void onChannelCreatedClicked(Categories category) {
+    private void onCreateChannelClicked(Categories category) {
         Toast.makeText(context, "create channel in " + category.getName(), Toast.LENGTH_SHORT).show();
 
         // create bottomSheet for create channel with all actions

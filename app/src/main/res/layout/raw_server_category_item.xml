@@ -28,7 +28,7 @@
                 android:layout_height="0dp"
                 android:orientation="horizontal"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/button_create_channel"
+                app:layout_constraintEnd_toStartOf="@+id/button_create_channel_plus"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
@@ -52,7 +52,7 @@
             </LinearLayout>
 
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/button_create_channel"
+                android:id="@+id/button_create_channel_plus"
                 style="@style/Widget.AppCompat.Button.Borderless"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
@@ -67,13 +67,10 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_channel"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="20dp"
             android:choiceMode="singleChoice"
             android:paddingTop="0dp"
-            android:paddingEnd="10dp"
             tools:itemCount="3"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
