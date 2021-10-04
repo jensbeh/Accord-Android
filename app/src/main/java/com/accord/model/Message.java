@@ -2,6 +2,7 @@ package com.accord.model;
 
 import java.beans.PropertyChangeSupport;
 import java.util.Objects;
+import java.util.Random;
 
 public class Message
 {
@@ -13,6 +14,8 @@ public class Message
     private String message;
     private long timestamp;
     private String id;
+    private final Random random = new Random();
+    private final int notificationId = random.nextInt();
     protected PropertyChangeSupport listeners;
 
     private String currentTime;
@@ -87,6 +90,10 @@ public class Message
         this.id = value;
         this.firePropertyChange(PROPERTY_ID, oldValue, value);
         return this;
+    }
+
+    public int getNotificationId() {
+        return notificationId;
     }
 
     public boolean firePropertyChange(String propertyName, Object oldValue, Object newValue)

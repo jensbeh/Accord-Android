@@ -30,7 +30,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.adapter.leftDrawer.ServerRecyclerViewAdapter;
-import com.accord.adapter.rightDrawer.OnlineUserRecyclerViewAdapter;
 import com.accord.bottomSheets.BottomSheetCreateServer;
 import com.accord.model.Categories;
 import com.accord.model.Channel;
@@ -92,14 +91,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private CardView button_addServer;
     private NavigationView navigationViewRight;
     private RecyclerView rv_server;
-    private OnlineUserRecyclerViewAdapter onlineUserRecyclerViewAdapter;
     private ServerRecyclerViewAdapter serverRecyclerViewAdapter;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private String KEY_PREFS = "privateChats";
 
     // notifications
-    private NotificationManagerCompat notificationManagerCompat;
+    private NotificationManagerCompat notificationManager;
 
     @SuppressLint("CommitPrefEdits")
     @Override
@@ -120,7 +118,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         builder.setMainActivity(this);
 
         // set notification manager to builder
-        
+        notificationManager = NotificationManagerCompat.from(this);
+        builder.setNotificationManager(notificationManager);
 
         // create RestClient
         restClient = new RestClient();

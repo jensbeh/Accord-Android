@@ -10,6 +10,7 @@ import com.accord.model.Channel;
 import com.accord.model.Message;
 import com.accord.model.User;
 import com.accord.net.webSocket.CustomWebSocketConfigurator;
+import com.accord.notification.Notifications;
 import com.accord.ui.home.PrivateChatsFragment;
 
 import org.json.JSONException;
@@ -157,6 +158,7 @@ public class PrivateChatWebSocket extends Endpoint {
                             channel.setUnreadMessagesCounter(channel.getUnreadMessagesCounter() + 1);
                             // notification
                             builder.getPrivateChatsController().updateSinglePrivateChatInRV(channel);
+                            Notifications.sendOnPrivateChannel(builder, message);
                         }
                         privateChatsController.updatePrivateChatsRV();
                         builder.getPrivateMessageController().notifyOnMessageAdded();

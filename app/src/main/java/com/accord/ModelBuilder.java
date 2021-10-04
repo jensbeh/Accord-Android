@@ -1,5 +1,7 @@
 package com.accord;
 
+import androidx.core.app.NotificationManagerCompat;
+
 import com.accord.adapter.leftDrawer.itemContainer.ServerCategoriesRecyclerViewAdapter;
 import com.accord.adapter.leftDrawer.itemContainer.ServerChannelsRecyclerViewAdapter;
 import com.accord.model.Channel;
@@ -46,6 +48,15 @@ public class ModelBuilder {
     private PrivateChatsFragment privateChatsController;
     private OnlineUsersFragment onlineUserController;
     private ServerMembersFragment serverMembersController;
+    private NotificationManagerCompat notificationManager;
+
+    public void setNotificationManager(NotificationManagerCompat notificationManager) {
+        this.notificationManager = notificationManager;
+    }
+
+    public NotificationManagerCompat getNotificationManager() {
+        return notificationManager;
+    }
 
     public void buildPersonalUser(String name, String password, String userKey) {
         personalUser = new CurrentUser().setName(name).setUserKey(userKey).setPassword(password);
