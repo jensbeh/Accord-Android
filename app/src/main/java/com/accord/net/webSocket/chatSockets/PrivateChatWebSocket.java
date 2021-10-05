@@ -6,8 +6,8 @@ import android.os.StrictMode;
 import android.widget.Toast;
 
 import com.accord.ModelBuilder;
-import com.accord.model.Channel;
 import com.accord.model.Message;
+import com.accord.model.PrivateChat;
 import com.accord.model.User;
 import com.accord.net.webSocket.CustomWebSocketConfigurator;
 import com.accord.notification.Notifications;
@@ -150,15 +150,15 @@ public class PrivateChatWebSocket extends Endpoint {
                     // currentUser received
                     channelName = msg.getString("from");
                 }
-                for (Channel channel : builder.getPersonalUser().getPrivateChat()) {
-                    if (channel.getName().equals(channelName)) {
-                        channel.withMessage(message);
-                        if (builder.getSelectedPrivateChat() == null || channel != builder.getSelectedPrivateChat()) {
+                for (PrivateChat privateChat : builder.getPersonalUser().getPrivateChats()) {
+                    if (privateChat.getName().equals(channelName)) {
+                        privateChat.withMessage(message);
+                        if (builder.getSelectedPrivateChat() == null || privateChat != builder.getSelectedPrivateChat()) {
                             // unread message
-                            channel.setUnreadMessagesCounter(channel.getUnreadMessagesCounter() + 1);
+                            privateChat.setUnreadMessagesCounter(privateChat.getUnreadMessagesCounter() + 1);
                             // notification
-                            builder.getPrivateChatsController().updateSinglePrivateChatInRV(channel);
-                            Notifications.sendOnPrivateChannel(builder, message);
+                            builder.getPrivateChatsController().updateSinglePrivateChatInRV(privateChat);
+                            Notifications.sendOnPrivateChannel(builder, privateChat, message);
                         }
                         privateChatsController.updatePrivateChatsRV();
                         builder.getPrivateMessageController().notifyOnMessageAdded();
@@ -173,8 +173,8 @@ public class PrivateChatWebSocket extends Endpoint {
                             userId = user.getId();
                         }
                     }
-                    Channel channel = new Channel().setId(userId).setName(channelName).withMessage(message).setUnreadMessagesCounter(1);
-                    builder.getPersonalUser().withPrivateChat(channel);
+                    PrivateChat privateChat = new PrivateChat().setId(userId).setName(channelName).withMessage(message).setUnreadMessagesCounter(1);
+                    builder.getPersonalUser().withPrivateChat(privateChat);
                     privateChatsController.updatePrivateChatsRV();
                     builder.getPrivateMessageController().notifyOnMessageAdded();
                 }

@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.accord.ModelBuilder;
 import com.accord.R;
-import com.accord.model.Channel;
+import com.accord.model.PrivateChat;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -23,9 +23,9 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
     private ModelBuilder modelBuilder;
 
     public interface OnItemClickListener {
-        void onItemClick(View view, Channel channel);
+        void onItemClick(View view, PrivateChat channel);
 
-        void onItemLongClick(View view, Channel channel);
+        void onItemLongClick(View view, PrivateChat channel);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
@@ -95,14 +95,14 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         // Get element from your local data at this position and replace the
         // contents of the view with that element
-        Channel channel = modelBuilder.getPersonalUser().getPrivateChat().get(position);
-        viewHolder.userName.setText(channel.getName());
-        if (channel.getMessage().size() > 0) {
-            viewHolder.lastMessage.setText(channel.getMessage().get(channel.getMessage().size() - 1).getMessage());
+        PrivateChat privateChat = modelBuilder.getPersonalUser().getPrivateChats().get(position);
+        viewHolder.userName.setText(privateChat.getName());
+        if (privateChat.getMessage().size() > 0) {
+            viewHolder.lastMessage.setText(privateChat.getMessage().get(privateChat.getMessage().size() - 1).getMessage());
         } else {
             viewHolder.lastMessage.setText("");
         }
-        if (modelBuilder.getSelectedPrivateChat() != null && modelBuilder.getSelectedPrivateChat().getName().equals(channel.getName())) {
+        if (modelBuilder.getSelectedPrivateChat() != null && modelBuilder.getSelectedPrivateChat().getName().equals(privateChat.getName())) {
             //make privateChat background when clicked
             viewHolder.itemBackground.setBackground(ContextCompat.getDrawable(context, R.drawable.private_chat_box_clicked_rounded_corner));
         } else {
@@ -111,9 +111,9 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
         }
 
         // notification icon
-        if (channel.getUnreadMessagesCounter() > 0) {
+        if (privateChat.getUnreadMessagesCounter() > 0) {
             viewHolder.card_view_notification.setVisibility(View.VISIBLE);
-            viewHolder.tv_notification_counter.setText(String.valueOf(channel.getUnreadMessagesCounter()));
+            viewHolder.tv_notification_counter.setText(String.valueOf(privateChat.getUnreadMessagesCounter()));
         } else {
             viewHolder.card_view_notification.setVisibility(View.INVISIBLE);
             viewHolder.tv_notification_counter.setText("");
@@ -124,10 +124,10 @@ public class PrivateChatRecyclerViewAdapter extends RecyclerView.Adapter<Private
     // Return the size of your data (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return modelBuilder.getPersonalUser().getPrivateChat().size();
+        return modelBuilder.getPersonalUser().getPrivateChats().size();
     }
 
-    public Channel getItem(int position) {
-        return modelBuilder.getPersonalUser().getPrivateChat().get(position);
+    public PrivateChat getItem(int position) {
+        return modelBuilder.getPersonalUser().getPrivateChats().get(position);
     }
 }

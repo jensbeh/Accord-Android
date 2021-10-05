@@ -17,7 +17,7 @@ import com.accord.MainActivity;
 import com.accord.ModelBuilder;
 import com.accord.R;
 import com.accord.adapter.rightDrawer.OnlineUserRecyclerViewAdapter;
-import com.accord.model.Channel;
+import com.accord.model.PrivateChat;
 import com.accord.model.User;
 
 public class OnlineUsersFragment extends Fragment {
@@ -84,13 +84,13 @@ public class OnlineUsersFragment extends Fragment {
         String userName = user.getName();
         //Toast.makeText(MainActivity.this, userName, Toast.LENGTH_LONG).show();
 
-        Channel currentChannel = builder.getSelectedPrivateChat();
+        PrivateChat currentPrivateChat = builder.getSelectedPrivateChat();
         boolean chatExisting = false;
         String selectedUserName = user.getName();
         String selectUserId = user.getId();
 
-        for (Channel channel : builder.getPersonalUser().getPrivateChat()) {
-            if (channel.getName().equals(selectedUserName)) {
+        for (PrivateChat privateChat : builder.getPersonalUser().getPrivateChats()) {
+            if (privateChat.getName().equals(selectedUserName)) {
                 // chat existing -> show box clicked and show messages
                 if (builder.getSelectedPrivateChat() == null) {
                     // but chat is not opened
@@ -100,7 +100,7 @@ public class OnlineUsersFragment extends Fragment {
                     // some chat is opened
                     builder.getPrivateMessageController().notifyOnChatChanged();
                 }
-                builder.setSelectedPrivateChat(channel);
+                builder.setSelectedPrivateChat(privateChat);
                 builder.getPrivateChatsController().updatePrivateChatsRV();
                 chatExisting = true;
                 break;
@@ -110,7 +110,7 @@ public class OnlineUsersFragment extends Fragment {
         if ((builder.getState() == MainActivity.State.HomeView && !chatExisting)) {
             // if not existing AND NO chat is opened
             builder.setState(MainActivity.State.PrivateChatView);
-            builder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
+            builder.setSelectedPrivateChat(new PrivateChat().setName(selectedUserName).setId(selectUserId));
             builder.getPersonalUser().withPrivateChat(builder.getSelectedPrivateChat());
             chatExisting = true;
             builder.getPrivateChatsController().updatePrivateChatsRV();
@@ -119,7 +119,7 @@ public class OnlineUsersFragment extends Fragment {
 
         if (builder.getState() == MainActivity.State.PrivateChatView && !chatExisting) {
             // if not existing AND chat is opened
-            builder.setSelectedPrivateChat(new Channel().setName(selectedUserName).setId(selectUserId));
+            builder.setSelectedPrivateChat(new PrivateChat().setName(selectedUserName).setId(selectUserId));
             builder.getPersonalUser().withPrivateChat(builder.getSelectedPrivateChat());
             chatExisting = true;
             builder.getPrivateChatsController().updatePrivateChatsRV();

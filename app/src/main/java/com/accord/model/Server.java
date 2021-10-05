@@ -7,8 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class Server
-{
+public class Server {
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_ID = "id";
     public static final String PROPERTY_OWNER = "owner";
@@ -22,15 +21,12 @@ public class Server
     protected PropertyChangeSupport listeners;
     private ServerChannel currentServerChannel;
 
-    public String getName()
-    {
+    public String getName() {
         return this.name;
     }
 
-    public Server setName(String value)
-    {
-        if (Objects.equals(value, this.name))
-        {
+    public Server setName(String value) {
+        if (Objects.equals(value, this.name)) {
             return this;
         }
 
@@ -40,15 +36,12 @@ public class Server
         return this;
     }
 
-    public String getId()
-    {
+    public String getId() {
         return this.id;
     }
 
-    public Server setId(String value)
-    {
-        if (Objects.equals(value, this.id))
-        {
+    public Server setId(String value) {
+        if (Objects.equals(value, this.id)) {
             return this;
         }
 
@@ -58,15 +51,12 @@ public class Server
         return this;
     }
 
-    public String getOwner()
-    {
+    public String getOwner() {
         return this.owner;
     }
 
-    public Server setOwner(String value)
-    {
-        if (Objects.equals(value, this.owner))
-        {
+    public Server setOwner(String value) {
+        if (Objects.equals(value, this.owner)) {
             return this;
         }
 
@@ -76,129 +66,101 @@ public class Server
         return this;
     }
 
-    public List<Categories> getCategories()
-    {
+    public List<Categories> getCategories() {
         return this.categories != null ? Collections.unmodifiableList(this.categories) : Collections.emptyList();
     }
 
-    public Server withCategories(Categories value)
-    {
-        if (this.categories == null)
-        {
+    public Server withCategories(Categories value) {
+        if (this.categories == null) {
             this.categories = new ArrayList<>();
         }
-        if (!this.categories.contains(value))
-        {
+        if (!this.categories.contains(value)) {
             this.categories.add(value);
             this.firePropertyChange(PROPERTY_CATEGORIES, null, value);
         }
         return this;
     }
 
-    public Server withCategories(Categories... value)
-    {
-        for (final Categories item : value)
-        {
+    public Server withCategories(Categories... value) {
+        for (final Categories item : value) {
             this.withCategories(item);
         }
         return this;
     }
 
-    public Server withCategories(Collection<? extends Categories> value)
-    {
-        for (final Categories item : value)
-        {
+    public Server withCategories(Collection<? extends Categories> value) {
+        for (final Categories item : value) {
             this.withCategories(item);
         }
         return this;
     }
 
-    public Server withoutCategories(Categories value)
-    {
-        if (this.categories != null && this.categories.remove(value))
-        {
+    public Server withoutCategories(Categories value) {
+        if (this.categories != null && this.categories.remove(value)) {
             this.firePropertyChange(PROPERTY_CATEGORIES, value, null);
         }
         return this;
     }
 
-    public Server withoutCategories(Categories... value)
-    {
-        for (final Categories item : value)
-        {
+    public Server withoutCategories(Categories... value) {
+        for (final Categories item : value) {
             this.withoutCategories(item);
         }
         return this;
     }
 
-    public Server withoutCategories(Collection<? extends Categories> value)
-    {
-        for (final Categories item : value)
-        {
+    public Server withoutCategories(Collection<? extends Categories> value) {
+        for (final Categories item : value) {
             this.withoutCategories(item);
         }
         return this;
     }
 
-    public List<User> getUser()
-    {
+    public List<User> getUser() {
         return this.user != null ? Collections.unmodifiableList(this.user) : Collections.emptyList();
     }
 
-    public Server withUser(User value)
-    {
-        if (this.user == null)
-        {
+    public Server withUser(User value) {
+        if (this.user == null) {
             this.user = new ArrayList<>();
         }
-        if (!this.user.contains(value))
-        {
+        if (!this.user.contains(value)) {
             this.user.add(value);
             this.firePropertyChange(PROPERTY_USER, null, value);
         }
         return this;
     }
 
-    public Server withUser(User... value)
-    {
-        for (final User item : value)
-        {
+    public Server withUser(User... value) {
+        for (final User item : value) {
             this.withUser(item);
         }
         return this;
     }
 
-    public Server withUser(Collection<? extends User> value)
-    {
-        for (final User item : value)
-        {
+    public Server withUser(Collection<? extends User> value) {
+        for (final User item : value) {
             this.withUser(item);
         }
         return this;
     }
 
-    public Server withoutUser(User value)
-    {
-        if (this.user != null && this.user.remove(value))
-        {
+    public Server withoutUser(User value) {
+        if (this.user != null && this.user.remove(value)) {
             this.firePropertyChange(PROPERTY_USER, value, null);
         }
         return this;
     }
 
-    public Server withoutUser(User... value)
-    {
-        for (final User item : value)
-        {
+    public Server withoutUser(User... value) {
+        for (final User item : value) {
             this.withoutUser(item);
         }
         return this;
     }
 
-    public Server withoutUser(Collection<? extends User> value)
-    {
-        for (final User item : value)
-        {
+    public Server withoutUser(Collection<? extends User> value) {
+        for (final User item : value) {
             this.withoutUser(item);
         }
         return this;
@@ -212,28 +174,23 @@ public class Server
         this.currentServerChannel = currentServerChannel;
     }
 
-    public boolean firePropertyChange(String propertyName, Object oldValue, Object newValue)
-    {
-        if (this.listeners != null)
-        {
+    public boolean firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        if (this.listeners != null) {
             this.listeners.firePropertyChange(propertyName, oldValue, newValue);
             return true;
         }
         return false;
     }
 
-    public PropertyChangeSupport listeners()
-    {
-        if (this.listeners == null)
-        {
+    public PropertyChangeSupport listeners() {
+        if (this.listeners == null) {
             this.listeners = new PropertyChangeSupport(this);
         }
         return this.listeners;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         final StringBuilder result = new StringBuilder();
         result.append(' ').append(this.getName());
         result.append(' ').append(this.getId());
@@ -241,8 +198,7 @@ public class Server
         return result.substring(1);
     }
 
-    public void removeYou()
-    {
+    public void removeYou() {
         this.withoutCategories(new ArrayList<>(this.getCategories()));
         this.withoutUser(new ArrayList<>(this.getUser()));
     }

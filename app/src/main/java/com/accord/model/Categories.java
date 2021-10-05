@@ -7,8 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class Categories
-{
+public class Categories {
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_ID = "id";
     public static final String PROPERTY_CHANNEL = "channel";
@@ -17,15 +16,12 @@ public class Categories
     protected PropertyChangeSupport listeners;
     private List<ServerChannel> channel;
 
-    public String getName()
-    {
+    public String getName() {
         return this.name;
     }
 
-    public Categories setName(String value)
-    {
-        if (Objects.equals(value, this.name))
-        {
+    public Categories setName(String value) {
+        if (Objects.equals(value, this.name)) {
             return this;
         }
 
@@ -35,15 +31,12 @@ public class Categories
         return this;
     }
 
-    public String getId()
-    {
+    public String getId() {
         return this.id;
     }
 
-    public Categories setId(String value)
-    {
-        if (Objects.equals(value, this.id))
-        {
+    public Categories setId(String value) {
+        if (Objects.equals(value, this.id)) {
             return this;
         }
 
@@ -53,100 +46,80 @@ public class Categories
         return this;
     }
 
-    public List<ServerChannel> getChannel()
-    {
+    public List<ServerChannel> getChannel() {
         return this.channel != null ? Collections.unmodifiableList(this.channel) : Collections.emptyList();
     }
 
-    public Categories withChannel(ServerChannel value)
-    {
-        if (this.channel == null)
-        {
+    public Categories withChannel(ServerChannel value) {
+        if (this.channel == null) {
             this.channel = new ArrayList<>();
         }
-        if (!this.channel.contains(value))
-        {
+        if (!this.channel.contains(value)) {
             this.channel.add(value);
             this.firePropertyChange(PROPERTY_CHANNEL, null, value);
         }
         return this;
     }
 
-    public Categories withChannel(Channel... value)
-    {
-        for (final Channel item : value)
-        {
+    public Categories withChannel(ServerChannel... value) {
+        for (final ServerChannel item : value) {
             this.withChannel(item);
         }
         return this;
     }
 
-    public Categories withChannel(Collection<? extends Channel> value)
-    {
-        for (final Channel item : value)
-        {
+    public Categories withChannel(Collection<? extends ServerChannel> value) {
+        for (final ServerChannel item : value) {
             this.withChannel(item);
         }
         return this;
     }
 
-    public Categories withoutChannel(Channel value)
-    {
-        if (this.channel != null && this.channel.remove(value))
-        {
+    public Categories withoutChannel(ServerChannel value) {
+        if (this.channel != null && this.channel.remove(value)) {
             this.firePropertyChange(PROPERTY_CHANNEL, value, null);
         }
         return this;
     }
 
-    public Categories withoutChannel(Channel... value)
-    {
-        for (final Channel item : value)
-        {
+    public Categories withoutChannel(ServerChannel... value) {
+        for (final ServerChannel item : value) {
             this.withoutChannel(item);
         }
         return this;
     }
 
-    public Categories withoutChannel(Collection<? extends Channel> value)
-    {
-        for (final Channel item : value)
-        {
+    public Categories withoutChannel(Collection<? extends ServerChannel> value) {
+        for (final ServerChannel item : value) {
             this.withoutChannel(item);
         }
         return this;
     }
 
-    public boolean firePropertyChange(String propertyName, Object oldValue, Object newValue)
-    {
-        if (this.listeners != null)
-        {
+    public boolean firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        if (this.listeners != null) {
             this.listeners.firePropertyChange(propertyName, oldValue, newValue);
             return true;
         }
         return false;
     }
 
-    public PropertyChangeSupport listeners()
-    {
-        if (this.listeners == null)
-        {
+    public PropertyChangeSupport listeners() {
+        if (this.listeners == null) {
             this.listeners = new PropertyChangeSupport(this);
         }
         return this.listeners;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         final StringBuilder result = new StringBuilder();
         result.append(' ').append(this.getName());
         result.append(' ').append(this.getId());
         return result.substring(1);
     }
 
-    public void removeYou()
-    {
+    public void removeYou() {
         this.withoutChannel(new ArrayList<>(this.getChannel()));
     }
 }

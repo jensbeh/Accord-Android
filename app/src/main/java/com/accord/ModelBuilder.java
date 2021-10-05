@@ -4,8 +4,8 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.accord.adapter.leftDrawer.itemContainer.ServerCategoriesRecyclerViewAdapter;
 import com.accord.adapter.leftDrawer.itemContainer.ServerChannelsRecyclerViewAdapter;
-import com.accord.model.Channel;
 import com.accord.model.CurrentUser;
+import com.accord.model.PrivateChat;
 import com.accord.model.Server;
 import com.accord.model.User;
 import com.accord.net.rest.RestClient;
@@ -36,7 +36,7 @@ public class ModelBuilder {
     private PrivateChatWebSocket privateChatWebSocket;
     private Map<String, ServerSystemWebSocket> serverSystemWebSocketsMap = new HashMap<>();
 
-    private Channel selectedPrivateChat;
+    private PrivateChat selectedPrivateChat;
     private MainActivity.State state;
 
     private MainActivity mainActivity;
@@ -115,11 +115,11 @@ public class ModelBuilder {
     }
 
 
-    public void setSelectedPrivateChat(Channel selectedPrivateChat) {
+    public void setSelectedPrivateChat(PrivateChat selectedPrivateChat) {
         this.selectedPrivateChat = selectedPrivateChat;
     }
 
-    public Channel getSelectedPrivateChat() {
+    public PrivateChat getSelectedPrivateChat() {
         return this.selectedPrivateChat;
     }
 
@@ -149,6 +149,7 @@ public class ModelBuilder {
     public PrivateChatWebSocket getPrivateChatWebSocketClient() {
         return privateChatWebSocket;
     }
+
     public void setPrivateChatWebSocket(PrivateChatWebSocket privateChatWebSocket) {
         this.privateChatWebSocket = privateChatWebSocket;
     }

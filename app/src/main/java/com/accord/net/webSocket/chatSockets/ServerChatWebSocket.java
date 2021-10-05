@@ -157,11 +157,11 @@ public class ServerChatWebSocket extends Endpoint {
 //                            setFrom(msg.getString("from")).
 //                            setTimestamp(msg.getLong("timestamp")).setCurrentTime(currentTime);
 //                }
-//                for (Channel channel : builder.getPersonalUser().getPrivateChat()) {
-//                    if (channel.getName().equals(channelName)) {
-//                        channel.withMessage(message);
-//                        if (builder.getSelectedPrivateChat() == null || channel != builder.getSelectedPrivateChat()) {
-//                            channel.setUnreadMessagesCounter(channel.getUnreadMessagesCounter() + 1);
+//                for (PrivateChat privateChat : builder.getPersonalUser().getPrivateChat()) {
+//                    if (privateChat.getName().equals(channelName)) {
+//                        privateChat.withMessage(message);
+//                        if (builder.getSelectedPrivateChat() == null || privateChat != builder.getSelectedPrivateChat()) {
+//                            privateChat.setUnreadMessagesCounter(privateChat.getUnreadMessagesCounter() + 1);
 //                        }
 //                        privateChatsController.updatePrivateChatsRV();
 //                        builder.getPrivateMessageController().notifyOnMessageAdded();
@@ -176,8 +176,8 @@ public class ServerChatWebSocket extends Endpoint {
 //                            userId = user.getId();
 //                        }
 //                    }
-//                    Channel channel = new Channel().setId(userId).setName(channelName).withMessage(message).setUnreadMessagesCounter(1);
-//                    builder.getPersonalUser().withPrivateChat(channel);
+//                    PrivateChat privateChat = new PrivateChat().setId(userId).setName(channelName).withMessage(message).setUnreadMessagesCounter(1);
+//                    builder.getPersonalUser().withPrivateChat(privateChat);
 //                    privateChatsController.updatePrivateChatsRV();
 //                    builder.getPrivateMessageController().notifyOnMessageAdded();
 //                }

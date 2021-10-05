@@ -17,7 +17,7 @@ import com.accord.MainActivity;
 import com.accord.ModelBuilder;
 import com.accord.R;
 import com.accord.adapter.leftDrawer.itemContainer.PrivateChatRecyclerViewAdapter;
-import com.accord.model.Channel;
+import com.accord.model.PrivateChat;
 
 public class PrivateChatsFragment extends Fragment {
     private ModelBuilder builder;
@@ -62,13 +62,13 @@ public class PrivateChatsFragment extends Fragment {
 
         privateChatsRecyclerViewAdapter.setOnItemClickListener(new PrivateChatRecyclerViewAdapter.OnItemClickListener() {
             @Override
-            public void onItemClick(View view, Channel channel) {
-                onPrivateChatClicked(channel);
+            public void onItemClick(View view, PrivateChat privateChat) {
+                onPrivateChatClicked(privateChat);
             }
 
             @Override
-            public void onItemLongClick(View view, Channel channel) {
-                onPrivateChatLongClicked(channel);
+            public void onItemLongClick(View view, PrivateChat privateChat) {
+                onPrivateChatLongClicked(privateChat);
             }
         });
     }
@@ -76,13 +76,13 @@ public class PrivateChatsFragment extends Fragment {
     /**
      * short click on private chat
      */
-    private void onPrivateChatClicked(Channel selectedChannel) {
+    private void onPrivateChatClicked(PrivateChat selectedPrivateChat) {
         // reset notification counter
-        if (selectedChannel.getUnreadMessagesCounter() > 0) {
-            selectedChannel.setUnreadMessagesCounter(0);
+        if (selectedPrivateChat.getUnreadMessagesCounter() > 0) {
+            selectedPrivateChat.setUnreadMessagesCounter(0);
         }
 
-        builder.setSelectedPrivateChat(selectedChannel);
+        builder.setSelectedPrivateChat(selectedPrivateChat);
         if (builder.getState() == MainActivity.State.HomeView) {
             // if no chat is opened
             builder.setState(MainActivity.State.PrivateChatView);
@@ -99,8 +99,8 @@ public class PrivateChatsFragment extends Fragment {
     /**
      * long click on private chat
      */
-    private void onPrivateChatLongClicked(Channel chat) {
-        String chatId = chat.getId();
+    private void onPrivateChatLongClicked(PrivateChat selectedPrivateChat) {
+        String chatId = selectedPrivateChat.getId();
         Toast.makeText(builder.getMainActivity(), chatId, Toast.LENGTH_LONG).show();
     }
 
@@ -114,10 +114,10 @@ public class PrivateChatsFragment extends Fragment {
     /**
      * update the private chat recyclerView
      */
-    public void updateSinglePrivateChatInRV(Channel channel) {
+    public void updateSinglePrivateChatInRV(PrivateChat privateChat) {
         getActivity().runOnUiThread(() -> {
-            if (builder.getPersonalUser().getPrivateChat().contains(channel)) {
-                privateChatsRecyclerViewAdapter.notifyItemChanged(builder.getPersonalUser().getPrivateChat().indexOf(channel));
+            if (builder.getPersonalUser().getPrivateChats().contains(privateChat)) {
+                privateChatsRecyclerViewAdapter.notifyItemChanged(builder.getPersonalUser().getPrivateChats().indexOf(privateChat));
             }
         });
     }

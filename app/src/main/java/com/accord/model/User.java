@@ -3,8 +3,7 @@ package com.accord.model;
 import java.beans.PropertyChangeSupport;
 import java.util.Objects;
 
-public class User
-{
+public class User {
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_ID = "id";
     public static final String PROPERTY_STATUS = "status";
@@ -17,15 +16,12 @@ public class User
     private double userVolume;
     protected PropertyChangeSupport listeners;
 
-    public String getName()
-    {
+    public String getName() {
         return this.name;
     }
 
-    public User setName(String value)
-    {
-        if (Objects.equals(value, this.name))
-        {
+    public User setName(String value) {
+        if (Objects.equals(value, this.name)) {
             return this;
         }
 
@@ -35,15 +31,12 @@ public class User
         return this;
     }
 
-    public String getId()
-    {
+    public String getId() {
         return this.id;
     }
 
-    public User setId(String value)
-    {
-        if (Objects.equals(value, this.id))
-        {
+    public User setId(String value) {
+        if (Objects.equals(value, this.id)) {
             return this;
         }
 
@@ -53,15 +46,12 @@ public class User
         return this;
     }
 
-    public boolean isStatus()
-    {
+    public boolean isStatus() {
         return this.status;
     }
 
-    public User setStatus(boolean value)
-    {
-        if (value == this.status)
-        {
+    public User setStatus(boolean value) {
+        if (value == this.status) {
             return this;
         }
 
@@ -71,15 +61,12 @@ public class User
         return this;
     }
 
-    public String getDescription()
-    {
+    public String getDescription() {
         return this.description;
     }
 
-    public User setDescription(String value)
-    {
-        if (Objects.equals(value, this.description))
-        {
+    public User setDescription(String value) {
+        if (Objects.equals(value, this.description)) {
             return this;
         }
 
@@ -89,15 +76,12 @@ public class User
         return this;
     }
 
-    public double getUserVolume()
-    {
+    public double getUserVolume() {
         return this.userVolume;
     }
 
-    public User setUserVolume(double value)
-    {
-        if (value == this.userVolume)
-        {
+    public User setUserVolume(double value) {
+        if (value == this.userVolume) {
             return this;
         }
 
@@ -107,28 +91,23 @@ public class User
         return this;
     }
 
-    public boolean firePropertyChange(String propertyName, Object oldValue, Object newValue)
-    {
-        if (this.listeners != null)
-        {
+    public boolean firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        if (this.listeners != null) {
             this.listeners.firePropertyChange(propertyName, oldValue, newValue);
             return true;
         }
         return false;
     }
 
-    public PropertyChangeSupport listeners()
-    {
-        if (this.listeners == null)
-        {
+    public PropertyChangeSupport listeners() {
+        if (this.listeners == null) {
             this.listeners = new PropertyChangeSupport(this);
         }
         return this.listeners;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         final StringBuilder result = new StringBuilder();
         result.append(' ').append(this.getName());
         result.append(' ').append(this.getId());

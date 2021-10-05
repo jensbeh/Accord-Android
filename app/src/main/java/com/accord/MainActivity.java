@@ -32,8 +32,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.accord.adapter.leftDrawer.ServerRecyclerViewAdapter;
 import com.accord.bottomSheets.BottomSheetCreateServer;
 import com.accord.model.Categories;
-import com.accord.model.Channel;
 import com.accord.model.Message;
+import com.accord.model.PrivateChat;
 import com.accord.model.Server;
 import com.accord.model.ServerChannel;
 import com.accord.model.User;
@@ -44,6 +44,7 @@ import com.accord.net.webSocket.chatSockets.PrivateChatWebSocket;
 import com.accord.net.webSocket.chatSockets.ServerChatWebSocket;
 import com.accord.net.webSocket.systemSockets.ServerSystemWebSocket;
 import com.accord.net.webSocket.systemSockets.SystemWebSocket;
+import com.accord.notification.NotificationHandler;
 import com.accord.ui.chatMessages.PrivateMessagesFragment;
 import com.accord.ui.chatMessages.ServerMessagesFragment;
 import com.accord.ui.home.HomeFragment;
@@ -120,6 +121,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // set notification manager to builder
         notificationManager = NotificationManagerCompat.from(this);
         builder.setNotificationManager(notificationManager);
+        NotificationHandler.setBuilder(builder);
 
         // create RestClient
         restClient = new RestClient();
@@ -759,12 +761,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         Gson gson = new Gson();
-        ArrayList<Channel> channelArrayList = new ArrayList<>();
-        for (Channel channel : builder.getPersonalUser().getPrivateChat()) {
-            Channel newChannel = new Channel().setName(channel.getName()).setId(channel.getId()).setMessages(channel.getMessages()).setUnreadMessagesCounter(channel.getUnreadMessagesCounter());
-            channelArrayList.add(newChannel);
+        ArrayList<PrivateChat> privateChatsArrayList = new ArrayList<>();
+        for (PrivateChat privateChat : builder.getPersonalUser().getPrivateChats()) {
+            PrivateChat newPrivateChat = new PrivateChat().setName(privateChat.getName()).setId(privateChat.getId()).setMessages(privateChat.getMessages()).setUnreadMessagesCounter(privateChat.getUnreadMessagesCounter());
+            privateChatsArrayList.add(newPrivateChat);
         }
-        String json = gson.toJson(channelArrayList);
+        String json = gson.toJson(privateChatsArrayList);
         editor.putString(builder.getPersonalUser().getName(), json);
         editor.apply();
     }
@@ -776,9 +778,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
         Gson gson = new Gson();
         String json = sharedPreferences.getString(builder.getPersonalUser().getName(), null);
-        Type type = new TypeToken<ArrayList<Channel>>() {
+        Type type = new TypeToken<ArrayList<PrivateChat>>() {
         }.getType();
-        ArrayList<Channel> mExampleList = gson.fromJson(json, type);
+        ArrayList<PrivateChat> mExampleList = gson.fromJson(json, type);
         if (mExampleList != null) {
             builder.getPersonalUser().withPrivateChat(mExampleList);
         }

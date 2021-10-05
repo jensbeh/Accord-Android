@@ -25,7 +25,7 @@ public class ResponseWithJsonList {
         private String name;
         private String description;
         private String server;
-        private List<Channel> channels;
+        private List<ServerChannel> channels;
 
         private String type;
         private boolean privileged;
@@ -54,7 +54,7 @@ public class ResponseWithJsonList {
             return server;
         }
 
-        public List<Channel> getChannels() {
+        public List<ServerChannel> getChannels() {
             return channels;
         }
 
@@ -95,7 +95,7 @@ public class ResponseWithJsonList {
         }
     }
 
-    public class Channel {
+    public class ServerChannel {
         private String id;
         private String name;
 
