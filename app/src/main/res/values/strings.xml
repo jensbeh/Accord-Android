@@ -14,6 +14,7 @@
     <string name="accord">Accord</string>
     <string name="password">Password</string>
     <string name="username">Username</string>
+    <string name="ipAddress">IP: 192.168.188.42</string>
     <string name="login">Login</string>
     <string name="register">Register</string>
     <string name="remember_me">Remember Me</string>
